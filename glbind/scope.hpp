@@ -39,4 +39,20 @@ namespace rkki::glbind
         glBindBuffer(GL_ARRAY_BUFFER,vbo_id);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,ebo_id);
     }
+
+    inline void Scope(int x,int y,int w,int h,std::function<void()> func)
+    {
+        glViewport(x,y,w,h);
+        glClearColor(0.0f,0.0f,0.0f,1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        Scope(func);
+    }
+
+    inline void Scope(int x,int y,int w,int h,float r,float g,float b,float a,std::function<void()> func)
+    {
+        glViewport(x,y,w,h);
+        glClearColor(r,g,b,a);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        Scope(func);
+    }
 }

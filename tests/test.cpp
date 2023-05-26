@@ -126,12 +126,9 @@ int main() noexcept
         {
             glbind::Scope([&]()
             {
-                glbind::Scope([&]()
+                glbind::Scope(0,0,64,64,[&]()
                 {
                     frame.use();
-                    glViewport(0,0,64,64);
-                    glClearColor(0.1f,0.1f,0.1f,1.0f);
-                    glClear(GL_COLOR_BUFFER_BIT);
                     tex.bind();
                     vertices.draw();
                 });
@@ -139,7 +136,7 @@ int main() noexcept
                 glViewport(0,0,800,600);
                 glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
                 glClear(GL_COLOR_BUFFER_BIT);
-                glBindTexture(GL_TEXTURE_2D,frame.get_texture_id());
+                frame_tex.bind();
                 program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(1.0f,0.9f,1.0f)));
                 vertices.draw();
                 glfwPollEvents();
