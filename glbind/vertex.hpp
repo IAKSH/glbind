@@ -24,38 +24,34 @@ namespace rkki::glbind
         VertexArray(const VerticesArray& vertices,const IndicesArray& indices) noexcept
             : vertices(vertices),indices(indices)
         {
-            Scope scope;
+            Scope([&]()
+            {
+                int buffer_type_enum;
+                if constexpr(buffer_type == VertexBufferType::Static)
+                    buffer_type_enum = GL_STATIC_DRAW;
+                else if constexpr(buffer_type == VertexBufferType::Dynamic)
+                    buffer_type_enum = GL_DYNAMIC_DRAW;
+                else if constexpr(buffer_type == VertexBufferType::Stream)
+                    buffer_type_enum = GL_STREAM_DRAW;
 
-            int buffer_type_enum;
-            if constexpr(buffer_type == VertexBufferType::Static)
-                buffer_type_enum = GL_STATIC_DRAW;
-            else if constexpr(buffer_type == VertexBufferType::Dynamic)
-                buffer_type_enum = GL_DYNAMIC_DRAW;
-            else if constexpr(buffer_type == VertexBufferType::Stream)
-                buffer_type_enum = GL_STREAM_DRAW;
-
-            glGenVertexArrays(1,&vao_id);
-            glGenBuffers(1,&vbo_id);
-            glGenBuffers(1,&ebo_id);
-            glBindVertexArray(vao_id);
-            glBindBuffer(GL_ARRAY_BUFFER,vbo_id);
-            glBufferData(GL_ARRAY_BUFFER,sizeof(vertices),vertices.data(),buffer_type_enum);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,ebo_id);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(indices),indices.data(),buffer_type_enum);
-            // position attribute
-            glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,9 * sizeof(float),(void*)0);
-            glEnableVertexAttribArray(0);
-            // color attribute
-            glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,9 * sizeof(float),(void*)(3 * sizeof(float)));
-            glEnableVertexAttribArray(1);
-            // texture coord attribute
-            glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,9 * sizeof(float),(void*)(7 * sizeof(float)));
-            glEnableVertexAttribArray(2);
-
-            // TODO: temp code
-            glBindVertexArray(0);
-            glBindBuffer(GL_ARRAY_BUFFER,0);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
+                glGenVertexArrays(1,&vao_id);
+                glGenBuffers(1,&vbo_id);
+                glGenBuffers(1,&ebo_id);
+                glBindVertexArray(vao_id);
+                glBindBuffer(GL_ARRAY_BUFFER,vbo_id);
+                glBufferData(GL_ARRAY_BUFFER,sizeof(vertices),vertices.data(),buffer_type_enum);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,ebo_id);
+                glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(indices),indices.data(),buffer_type_enum);
+                // position attribute
+                glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,9 * sizeof(float),(void*)0);
+                glEnableVertexAttribArray(0);
+                // color attribute
+                glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,9 * sizeof(float),(void*)(3 * sizeof(float)));
+                glEnableVertexAttribArray(1);
+                // texture coord attribute
+                glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,9 * sizeof(float),(void*)(7 * sizeof(float)));
+                glEnableVertexAttribArray(2);
+            });
         }
 
         VertexArray(VertexArray&) = delete;
@@ -68,30 +64,28 @@ namespace rkki::glbind
 
         void draw() const noexcept
         {
-            glBindVertexArray(vao_id);
-            glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
-
-            // TODO: temp code
-            glBindVertexArray(0);
+            Scope([&]()
+            {
+                glBindVertexArray(vao_id);
+                glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
+            });
         }
 
         void update() const noexcept
         {
-            Scope scope;
+            Scope([&]()
+            {
+                unsigned int buffer_type_enum;
+                if constexpr(buffer_type == VertexBufferType::Static)
+                    buffer_type_enum = GL_STATIC_DRAW;
+                else if constexpr(buffer_type == VertexBufferType::Dynamic)
+                    buffer_type_enum = GL_DYNAMIC_DRAW;
+                else if constexpr(buffer_type == VertexBufferType::Stream)
+                    buffer_type_enum = GL_STREAM_DRAW;
 
-            unsigned int buffer_type_enum;
-            if constexpr(buffer_type == VertexBufferType::Static)
-                buffer_type_enum = GL_STATIC_DRAW;
-            else if constexpr(buffer_type == VertexBufferType::Dynamic)
-                buffer_type_enum = GL_DYNAMIC_DRAW;
-            else if constexpr(buffer_type == VertexBufferType::Stream)
-                buffer_type_enum = GL_STREAM_DRAW;
-
-            glBindBuffer(GL_ARRAY_BUFFER,get_vbo_id());
-            glBufferData(GL_ARRAY_BUFFER,sizeof(vertices),vertices.data(),buffer_type_enum);
-
-            // TODO: temp code
-            glBindBuffer(GL_ARRAY_BUFFER,0);
+                glBindBuffer(GL_ARRAY_BUFFER,get_vbo_id());
+                glBufferData(GL_ARRAY_BUFFER,sizeof(vertices),vertices.data(),buffer_type_enum);
+            });
         }
 
         auto get_vao_id() const noexcept

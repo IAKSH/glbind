@@ -50,6 +50,7 @@ namespace rkki::glbind
     concept TextureService = requires(T t)
     {
         {t.bind()} -> std::same_as<void>;
+        {t.get_texture_id()} -> std::same_as<unsigned int>;
         {t.get_width()} -> std::same_as<unsigned int>;
         {t.get_height()} -> std::same_as<unsigned int>;
         {t.get_channel_type()} -> std::same_as<ColorChannelType>;

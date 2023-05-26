@@ -1,4 +1,3 @@
-#include "frame.hpp"
 #include <opengl.hpp>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -124,18 +123,19 @@ int main() noexcept
         
         while(true)
         {
-            frame.use();
-            glViewport(0,0,64,64);
-            glClearColor(0.1f,0.1f,0.1f,1.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
-            for(int i = 0;i < 2;i++)
             {
-                tex.bind();
-                vertices.draw();
+                frame.use();
+                glViewport(0,0,64,64);
+                glClearColor(0.1f,0.1f,0.1f,1.0f);
+                glClear(GL_COLOR_BUFFER_BIT);
+                for(int i = 0;i < 2;i++)
+                {
+                    tex.bind();
+                    vertices.draw();
+                }
             }
 
             glViewport(0,0,800,600);
-            glBindFramebuffer(GL_FRAMEBUFFER,0);
             glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
             glClear(GL_COLOR_BUFFER_BIT);
             glBindTexture(GL_TEXTURE_2D,frame.get_texture_id());
