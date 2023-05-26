@@ -98,11 +98,14 @@ int main() noexcept
 
         for(int i = 0;i < 2;i++)
         {
-            vertices.draw();
-            glfwPollEvents();
-            glfwSwapBuffers(window);
-            glClearColor(0.2f,0.3f,0.3f,1.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
+            glbind::Scope([&]()
+            {
+                vertices.draw();
+                glfwPollEvents();
+                glfwSwapBuffers(window);
+                glClearColor(0.2f,0.3f,0.3f,1.0f);
+                glClear(GL_COLOR_BUFFER_BIT);
+            });
         }
 
         std::this_thread::sleep_for(std::chrono::seconds(1));

@@ -123,27 +123,27 @@ int main() noexcept
         
         while(true)
         {
+            glbind::Scope([&]()
             {
-                frame.use();
-                glViewport(0,0,64,64);
-                glClearColor(0.1f,0.1f,0.1f,1.0f);
-                glClear(GL_COLOR_BUFFER_BIT);
-                for(int i = 0;i < 2;i++)
+                glbind::Scope([&]()
                 {
+                    frame.use();
+                    glViewport(0,0,64,64);
+                    glClearColor(0.1f,0.1f,0.1f,1.0f);
+                    glClear(GL_COLOR_BUFFER_BIT);
                     tex.bind();
                     vertices.draw();
-                }
-            }
+                });
 
-            glViewport(0,0,800,600);
-            glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
-            glClear(GL_COLOR_BUFFER_BIT);
-            glBindTexture(GL_TEXTURE_2D,frame.get_texture_id());
-            program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(1.0f,0.9f,1.0f)));
-            vertices.draw();
-
-            glfwPollEvents();
-            glfwSwapBuffers(window);
+                glViewport(0,0,800,600);
+                glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
+                glClear(GL_COLOR_BUFFER_BIT);
+                glBindTexture(GL_TEXTURE_2D,frame.get_texture_id());
+                program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(1.0f,0.9f,1.0f)));
+                vertices.draw();
+                glfwPollEvents();
+                glfwSwapBuffers(window);
+            });
         }
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
