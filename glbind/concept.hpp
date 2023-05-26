@@ -102,5 +102,16 @@ namespace rkki::glbind
         {t.use_as_read()} -> std::same_as<void>;
         {t.get_fbo_id()} -> std::same_as<unsigned int>;
         {t.get_texture_id()} -> std::same_as<unsigned int>;
+        {t.get_width()} -> std::same_as<unsigned int>;
+        {t.get_height()} -> std::same_as<unsigned int>; 
+    };
+
+    template <typename T>
+    concept ViewportService = requires(T t,int x,int y,int w,int h)
+    {
+        {t.set_view(w,h)} -> std::same_as<void>;
+        {t.set_position(x,y)} -> std::same_as<void>;
+        {t.get_view()} -> std::same_as<std::array<int,2>>;
+        {t.get_position()} -> std::same_as<std::array<int,2>>;
     };
 }

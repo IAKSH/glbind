@@ -2,28 +2,29 @@
 
 #include "concept.hpp"
 #include "scope.hpp"
+#include "texture.hpp"
 #include <stdexcept>
 
 namespace rkki::glbind
 {
+    template <TextureService T>
     class Frame
     {
     private:
         unsigned int fbo_id;
         unsigned int rbo_id;
-        unsigned int texture_id;
-        int width;
-        int height;
+        T& texture;
 
     public:
-        Frame(int w,int h) noexcept(false)
-            : width(w),height(h)
+        Frame(T& t) noexcept(false)
+            : texture(t)
         {
             Scope([&]()
             {
                 glGenFramebuffers(1,&fbo_id);
                 glBindFramebuffer(GL_FRAMEBUFFER,fbo_id);
 
+                /*
                 // create texture
                 glGenTextures(1,&texture_id);
                 glBindTexture(GL_TEXTURE_2D,texture_id);
@@ -32,14 +33,15 @@ namespace rkki::glbind
                 glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
                 //glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
                 //glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+                */
 
                 // bind texture to fbo
-                glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,texture_id,0);
+                glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,texture.get_texture_id(),0);
 
                 // create rbo
                 glGenRenderbuffers(1,&rbo_id);
                 glBindRenderbuffer(GL_RENDERBUFFER,rbo_id);
-                glRenderbufferStorage(GL_RENDERBUFFER,GL_DEPTH24_STENCIL8,w,h);
+                glRenderbufferStorage(GL_RENDERBUFFER,GL_DEPTH24_STENCIL8,texture.get_width(),texture.get_height());
 
                 // bind rbo to fbo
                 glFramebufferRenderbuffer(GL_FRAMEBUFFER,GL_DEPTH_STENCIL_ATTACHMENT,GL_RENDERBUFFER,rbo_id);
@@ -54,7 +56,6 @@ namespace rkki::glbind
 
         ~Frame() noexcept
         {
-            glDeleteTextures(1,&texture_id);
             glDeleteRenderbuffers(1,&rbo_id);
             glDeleteFramebuffers(1,&fbo_id);
         }
@@ -81,7 +82,19 @@ namespace rkki::glbind
 
         auto get_texture_id() const noexcept
         {
-            return texture_id;
+            return texture.get_texture_id();
+        }
+
+        auto get_width() const noexcept
+        {
+            return texture.get_width();
+        }
+
+        auto get_height() const noexcept
+        {
+            return texture.get_height();
         }
     };
+
+    using FrameRBG = Frame<TextureRGB<glbind::ColorChannelType::RGB>>;
 }

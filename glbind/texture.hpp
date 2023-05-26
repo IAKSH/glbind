@@ -11,8 +11,8 @@ namespace rkki::glbind
     {
     private:
         unsigned int texture_id;
-        const int width;
-        const int height;
+        const unsigned int width;
+        const unsigned int height;
 
     public:
         Texture(const unsigned char* const data,
@@ -105,6 +105,11 @@ namespace rkki::glbind
         auto get_height() const noexcept
         {
             return height;
+        }
+
+        auto get_channel_type() const noexcept
+        {
+            return channel_type;
         }
     };
 

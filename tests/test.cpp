@@ -119,7 +119,8 @@ int main() noexcept
 
         auto img {load_image("E:\\Programming-Projects\\glbind\\wires.jpg")};
         glbind::TextureRGB<glbind::ColorChannelType::RGB> tex(img.data.get(),0,0,img.width,img.height);
-        glbind::Frame frame(64,64);
+        glbind::TextureRGB<glbind::ColorChannelType::RGB> frame_tex(nullptr,0,0,128,64);
+        glbind::FrameRBG frame(frame_tex);
         
         while(true)
         {
