@@ -57,7 +57,7 @@ namespace rkki::glbind
     };
 
     template <typename T>
-    concept Uniform = any_same<T,glm::vec2,glm::vec3,glm::vec4,glm::mat4,int,float>() || TextureService<T>;
+    concept Uniform = any_same<T,glm::vec2,glm::vec3,glm::vec4,glm::mat4,int,float,bool>() || TextureService<T>;
 
     template <typename T>
     concept ProgramService = requires(T t)

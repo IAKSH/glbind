@@ -120,7 +120,7 @@ namespace rkki::glbind
         {
             auto&& location {get_uniform_location(uniform)};
             
-            if constexpr(is_same<T,int>())
+            if constexpr(is_same<T,int>() || is_same<T,bool>())
                 glUniform1i(location,t);
             else if constexpr(is_same<T,float>())
                 glUniform1f(location,t);
