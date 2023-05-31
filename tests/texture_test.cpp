@@ -1,3 +1,5 @@
+#include <cstdlib>
+#include <exception>
 #include <opengl.hpp>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -117,7 +119,7 @@ int main() noexcept
         program.use();
         program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(0.5f,0.5f,0.5f)));
 
-        auto img {load_image("E:\\Programming-Projects\\glbind\\wires.jpg")};
+        auto img {load_image("E:\\Programming-Projects\\glbind\\tests\\img\\wires.jpg")};
         glbind::TextureRGB<glbind::ColorChannelType::RGB> tex(img.data.get(),0,0,img.width,img.height);
         tex.bind();
         
@@ -138,9 +140,11 @@ int main() noexcept
     catch(const std::exception& e)
     {
         std::cerr << "exception: " << e.what() << std::endl;
+        std::terminate();
     }
     catch(...)
     {
         std::cerr << "unknow exception catched" << std::endl;
+        std::terminate();
     }
 }

@@ -75,23 +75,32 @@ namespace rkki::glbind
         {t.active_texture_uniform(uniform_name,tex_mark)} -> std::same_as<void>;
     };
 
-    enum class VertexBufferType
+    enum class BufferType
     {
         Static,Dynamic,Stream
     };
 
-    template <typename T,std::size_t vertices_len,std::size_t indices_len>
-    concept VertexService = requires(T t)
+    template <typename T,std::size_t vertices_len>
+    concept VertexBufferService = requires(T t,const std::array<float,vertices_len>& vertices)
+    {
+        {t.get_vbo_id()} -> std::same_as<unsigned int>;
+        {t.get_vertices_len()} -> std::same_as<std::size_t>;
+        {t.update(vertices)} -> std::same_as<void>;
+    };
+
+    template <typename T,std::size_t indices_len>
+    concept ElementBufferService = requires(T t,const std::array<float,indices_len>& indices)
+    {
+        {t.get_ebo_id()} -> std::same_as<unsigned int>;
+        {t.get_indices_len()} -> std::same_as<std::size_t>;
+        {t.update(indices)} -> std::same_as<void>;
+    };
+
+    template <typename T,typename EBO,std::size_t vertices_len,std::size_t indices_len>
+    concept VertexService = requires(T t,const EBO& ebo)
     {
         {t.draw()} -> std::same_as<void>;
-        {t.update()} -> std::same_as<void>;
-        {t.get_vao_id()} -> std::same_as<unsigned int>;
-        {t.get_vbo_id()} -> std::same_as<unsigned int>;
-        {t.get_ebo_id()} -> std::same_as<unsigned int>;
-        {t.get_vertices_len()} -> std::same_as<size_t>;
-        {t.get_indices_len()} -> std::same_as<size_t>;
-        {t.get_vertices()} -> std::same_as<std::array<float,vertices_len>&>;
-        {t.get_indices()} -> std::same_as<std::array<float,indices_len>&>;
+        {t.bind_ebo(ebo)} -> std::same_as<void>;
     };
 
     template <typename T>
@@ -113,5 +122,18 @@ namespace rkki::glbind
         {t.set_position(x,y)} -> std::same_as<void>;
         {t.get_view()} -> std::same_as<std::array<int,2>>;
         {t.get_position()} -> std::same_as<std::array<int,2>>;
+    };
+
+    template <typename T>
+    concept PrimitiveService = requires(T t)
+    {
+        {t.draw()} -> std::same_as<void>;
+    };
+
+    template <typename T>
+    concept TrianglePrimitiveService = PrimitiveService<T> && requires(T t,std::size_t index,const std::array<float,3>& position)
+    {
+        {t.set_position(index,position)} -> std::same_as<void>;
+        {t.get_position(index)} -> std::same_as<std::array<float,3>>;
     };
 }
