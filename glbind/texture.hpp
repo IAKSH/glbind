@@ -1,12 +1,20 @@
 #pragma once
 
-#include "concept.hpp"
 #include "scope.hpp"
-#include <glad/glad.h>
+#include <memory>
 
-namespace rkki::glbind
+namespace graphics
 {
-    template <ColorChannelType img_channel_type,ColorChannelType channel_type>
+    /**
+     * @brief enum class to indicate image channel type
+     * 
+     */
+    enum class ImageChannel
+    {
+        R,G,B,A,RGB,RGBA
+    };
+
+    template <ImageChannel texture_channel>
     class Texture
     {
     private:
@@ -14,9 +22,125 @@ namespace rkki::glbind
         const unsigned int width;
         const unsigned int height;
 
+        /**
+         * @brief expand or reduce the image channel
+         * @warning this function will copy the whole image data, in order to keep the original data
+         *
+         * @tparam from 
+         * @tparam to 
+         * @param data 
+         * @return std::unique_ptr<unsigned char[]> 
+         */
+        template <ImageChannel out_channel_type>
+        std::unique_ptr<unsigned char[]> trans_image(const unsigned char* data, unsigned int channels) const noexcept
+        {
+            if(!data)
+                return nullptr;
+
+            // calculate the number of bytes needed for the new image channel format
+            unsigned int new_channels;
+            if constexpr (out_channel_type == ImageChannel::R) {
+                new_channels = 1;
+            } else if constexpr (out_channel_type == ImageChannel::G) {
+                new_channels = 1;
+            } else if constexpr (out_channel_type == ImageChannel::B) {
+                new_channels = 1;
+            } else if constexpr (out_channel_type == ImageChannel::A) {
+                new_channels = 1;
+            } else if constexpr (out_channel_type == ImageChannel::RGB) {
+                new_channels = 3;
+            } else if constexpr (out_channel_type == ImageChannel::RGBA) {
+                new_channels = 4;
+            }
+        
+            // allocate memory for the new image data
+            auto new_data = std::make_unique<unsigned char[]>(width * height * new_channels);
+        
+            // set up pointers to the old and new image data
+            const auto* src = data;
+            auto* dst = new_data.get();
+        
+            // convert the image data pixel by pixel
+            for(unsigned int y = 0; y < height; ++y)
+            {
+                for(unsigned int x = 0; x < width; ++x)
+                {
+                    // get the color channels from the source image
+                    unsigned int r, g, b, a;
+                    if(channels == 1)
+                    {
+                        r = g = b = *src;
+                        a = 255;
+                        src += sizeof(unsigned char);
+                    }
+                    else if(channels == 3)
+                    {
+                        r = *(src + 0);
+                        g = *(src + 1);
+                        b = *(src + 2);
+                        a = 255;
+                        src += sizeof(unsigned char) * 3;
+                    }
+                    else if(channels == 4)
+                    {
+                        r = *(src + 0);
+                        g = *(src + 1);
+                        b = *(src + 2);
+                        a = *(src + 3);
+                        src += sizeof(unsigned char) * 4;
+                    }
+        
+                    // write the color channels to the destination image
+                    if constexpr (out_channel_type == ImageChannel::R)
+                    {
+                        *dst = r;
+                        dst += sizeof(unsigned char);
+                    }
+                    else if constexpr (out_channel_type == ImageChannel::G)
+                    {
+                        *dst = g;
+                        dst += sizeof(unsigned char);
+                    }
+                    else if constexpr (out_channel_type == ImageChannel::B)
+                    {
+                        *dst = b;
+                        dst += sizeof(unsigned char);
+                    }
+                    else if constexpr (out_channel_type == ImageChannel::A)
+                    {
+                        *dst = a;
+                        dst += sizeof(unsigned char);
+                    }
+                    else if constexpr (out_channel_type == ImageChannel::RGB)
+                    {
+                        *dst++ = r;
+                        *dst++ = g;
+                        *dst++ = b;
+                    }
+                    else if constexpr (out_channel_type == ImageChannel::RGBA)
+                    {
+                        *dst++ = r;
+                        *dst++ = g;
+                        *dst++ = b;
+                        *dst++ = a;
+                    }
+                }
+            }
+
+            return new_data;
+        }
+
     public:
-        Texture(const unsigned char* const data,
-            unsigned int x,unsigned int y,unsigned int w,unsigned int h) noexcept
+        /**
+         * @brief       Construct a new Texture object
+         * 
+         * @param data  bitmap data pointer
+         * @param x     X axis coordinate of position where to start samping iamge
+         * @param y     Y axis coordinate of position where to start samping iamge
+         * @param w     width of the texture
+         * @param h     height of the texture
+         */
+        Texture(const unsigned char* const data,unsigned int channels,unsigned int x,unsigned int y,unsigned int w,unsigned int h) noexcept
             : width(w),height(h)
         {
             Scope([&]()
@@ -27,104 +151,122 @@ namespace rkki::glbind
                 glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 
-                int img_channel_bits;
-                int img_channel_enum;
-                if constexpr(img_channel_type == ColorChannelType::Red)
+                int texture_channel_enum;
+                unsigned int texture_source_channels;
+                if constexpr(texture_channel == ImageChannel::R)
                 {
-                    img_channel_bits = 1;
-                    img_channel_enum = GL_RED;
+                    texture_channel_enum = GL_RED;
+                    texture_source_channels = 1;
                 }
-                else if constexpr(img_channel_type == ColorChannelType::Green)
+                else if constexpr(texture_channel == ImageChannel::G)
                 {
-                    img_channel_bits = 1;
-                    img_channel_enum = GL_GREEN;
+                    texture_channel_enum = GL_GREEN;
+                    texture_source_channels = 1;
                 }
-                else if constexpr(img_channel_type == ColorChannelType::Blue)
+                else if constexpr(texture_channel == ImageChannel::B)
                 {
-                    img_channel_bits = 1;
-                    img_channel_enum = GL_BLUE;
+                    texture_channel_enum = GL_BLEND;
+                    texture_source_channels = 1;
                 }
-                else if constexpr(img_channel_type == ColorChannelType::Aplha)
+                else if constexpr(texture_channel == ImageChannel::A)
                 {
-                    img_channel_bits = 1;
-                    img_channel_enum = GL_ALPHA;
+                    texture_channel_enum = GL_ALPHA;
+                    texture_source_channels = 1;
                 }
-                else if constexpr(img_channel_type == ColorChannelType::RGB)
+                else if constexpr(texture_channel == ImageChannel::RGB)
                 {
-                    img_channel_bits = 3;
-                    img_channel_enum = GL_RGB;
+                    texture_channel_enum = GL_RGB;
+                    texture_source_channels = 3;
                 }
-                else if constexpr(img_channel_type == ColorChannelType::RGBA)
+                else if constexpr(texture_channel == ImageChannel::RGBA)
                 {
-                    img_channel_bits = 4;
-                    img_channel_enum = GL_RGBA;
+                    texture_channel_enum = GL_RGBA;
+                    texture_source_channels = 4;
                 }
 
-                int texture_channel_enum;
-                if constexpr(channel_type == ColorChannelType::Red)
-                    texture_channel_enum = GL_RED;
-                else if constexpr(channel_type == ColorChannelType::Green)
-                    texture_channel_enum = GL_GREEN;
-                else if constexpr(channel_type == ColorChannelType::Blue)
-                    texture_channel_enum = GL_BLEND;
-                else if constexpr(channel_type == ColorChannelType::Aplha)
-                    texture_channel_enum = GL_ALPHA;
-                else if constexpr(channel_type == ColorChannelType::RGB)
-                    texture_channel_enum = GL_RGB;
-                else if constexpr(channel_type == ColorChannelType::RGBA)
-                    texture_channel_enum = GL_RGBA;
+                int img_channel_enum;
+                if(channels == 1)
+                    img_channel_enum = GL_RED;
+                else if(channels == 3)
+                    img_channel_enum = GL_RGB;
+                else if(channels == 4)
+                    img_channel_enum = GL_RGBA;
 
                 glBindTexture(GL_TEXTURE_2D,texture_id);
-                glTexImage2D(GL_TEXTURE_2D,0,texture_channel_enum,w,h,0,img_channel_enum,GL_UNSIGNED_BYTE, data + (y * width + x) * img_channel_bits);
+                glTexImage2D(GL_TEXTURE_2D,0,texture_channel_enum,w,h,0,img_channel_enum,GL_UNSIGNED_BYTE, trans_image<texture_channel>(data,channels).get() + (y * width + x) * texture_source_channels);
                 glGenerateMipmap(GL_TEXTURE_2D);
             });
         }
 
+        /**
+         * @brief Texture can't be copied
+         * 
+         */
         Texture(Texture&) = delete;
 
+        /**
+         * @brief Destroy the Texture object
+         * 
+         */
         ~Texture() noexcept
         {
             glDeleteTextures(1,&texture_id);
         }
 
+        /**
+         * @brief bind this textrue to OpenGL
+         * @warning this will change the status of OpenGL
+         */
         void bind() const noexcept
         {
             glBindTexture(GL_TEXTURE_2D,texture_id);
         }
 
-        auto get_texture_id() const noexcept
+        /**
+         * @brief Get the texture id
+         * 
+         * @return unsigned int 
+         */
+        unsigned int get_texture_id() const noexcept
         {
             return texture_id;
         }
 
-        auto get_width() const noexcept
+        /**
+         * @brief Get the width of this texture
+         * 
+         * @return unsigned int 
+         */
+        unsigned int get_width() const noexcept
         {
             return width;
         }
 
-        auto get_height() const noexcept
+        /**
+         * @brief Get the height of this texture
+         * 
+         * @return unsigned int 
+         */
+        unsigned int get_height() const noexcept
         {
             return height;
         }
 
-        auto get_channel_type() const noexcept
+        /**
+         * @brief Get the channel type of this texture
+         * 
+         * @return ImageChannel 
+         */
+        constexpr ImageChannel get_channel_type() const noexcept
         {
-            return channel_type;
+            return texture_channel;
         }
     };
 
-    template <ColorChannelType img_channel_type>
-    using TextureRGBA = Texture<ColorChannelType::RGBA,img_channel_type>;
-    
-    template <ColorChannelType img_channel_type>
-    using TextureRGB = Texture<ColorChannelType::RGB,img_channel_type>;
-
-    template <ColorChannelType img_channel_type>
-    using TextureR = Texture<ColorChannelType::Red,img_channel_type>;
-
-    template <ColorChannelType img_channel_type>
-    using TextureG = Texture<ColorChannelType::Green,img_channel_type>;
-
-    template <ColorChannelType img_channel_type>
-    using TextureB = Texture<ColorChannelType::Blue,img_channel_type>;
+    using TextureR = Texture<ImageChannel::R>;
+    using TextureG = Texture<ImageChannel::G>;
+    using TextureB = Texture<ImageChannel::B>;
+    using TextureA = Texture<ImageChannel::A>;
+    using TextureRGB = Texture<ImageChannel::RGB>;
+    using TextureRGBA = Texture<ImageChannel::RGBA>;
 }

@@ -1,4 +1,9 @@
-#include <opengl.hpp>
+#include <frame.hpp>
+#include <primitive.hpp>
+#include <scope.hpp>
+#include <shader.hpp>
+#include <texture.hpp>
+#include <vertex.hpp>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <thread>
@@ -33,8 +38,6 @@ void initialize_window() noexcept
         std::terminate();
     }
 }
-
-using namespace rkki;
 
 constexpr std::string_view vertex_shader_glsl
 {
@@ -111,26 +114,34 @@ int main() noexcept
     try
     {
         // fill opengl code here
-        glbind::Program program((glbind::VShader(vertex_shader_glsl)),(glbind::FShader(fragment_shader_glsl)));
-        glbind::VertexArray<glbind::VertexBufferType::Static,4,2> vertices(rect_vertices,rect_indices);
+        graphics::Program program((graphics::VShader(vertex_shader_glsl)),(graphics::FShader(fragment_shader_glsl)));
+        graphics::VertexBuffer<graphics::BufferType::Static,36> vbo(rect_vertices);
+        graphics::ElementBuffer<graphics::BufferType::Static,6> ebo(rect_indices);
+        graphics::VertexArray vao(vbo,ebo);
+        // position attrib
+        vao.enable_attrib(0,3,9,0,false);
+        // color attrib
+        vao.enable_attrib(1,4,9,3,false);
+        // texture coord attrib
+        vao.enable_attrib(2,2,9,7,false);
 
         program.use();
         program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(0.5f,0.5f,0.5f)));
 
         auto img {load_image("E:\\Programming-Projects\\glbind\\tests\\img\\wires.jpg")};
-        glbind::TextureRGB<glbind::ColorChannelType::RGB> tex(img.data.get(),0,0,img.width,img.height);
-        glbind::TextureRGB<glbind::ColorChannelType::RGB> frame_tex(nullptr,0,0,128,64);
-        glbind::FrameRBG frame(frame_tex);
+        graphics::TextureRGB tex(img.data.get(),img.channels,0,0,img.width,img.height);
+        graphics::TextureRGB frame_tex(nullptr,3,0,0,128,64);
+        graphics::Frame frame(frame_tex);
         
         for(int i = 0;i < 2;i++)
         {
-            glbind::Scope([&]()
+            graphics::Scope([&]()
             {
-                glbind::Scope(0,0,64,64,[&]()
+                graphics::Scope(0,0,64,64,[&]()
                 {
                     frame.use();
                     tex.bind();
-                    vertices.draw();
+                    graphics::draw<graphics::Primitives::Triangles>(vao,6);
                 });
 
                 glViewport(0,0,800,600);
@@ -138,7 +149,7 @@ int main() noexcept
                 glClear(GL_COLOR_BUFFER_BIT);
                 frame_tex.bind();
                 program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(1.0f,0.9f,1.0f)));
-                vertices.draw();
+                graphics::draw<graphics::Primitives::Triangles>(vao,6);
                 glfwPollEvents();
                 glfwSwapBuffers(window);
             });

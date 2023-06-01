@@ -1,6 +1,10 @@
 #include "timer.hpp"
-#include <opengl.hpp>
-#include <glad/glad.h>
+#include <frame.hpp>
+#include <primitive.hpp>
+#include <scope.hpp>
+#include <shader.hpp>
+#include <texture.hpp>
+#include <vertex.hpp>
 #include <GLFW/glfw3.h>
 #include <thread>
 #define STB_IMAGE_IMPLEMENTATION
@@ -34,8 +38,6 @@ void initialize_window() noexcept
         std::terminate();
     }
 }
-
-using namespace rkki;
 
 constexpr std::string_view vertex_shader_glsl
 {
@@ -71,96 +73,6 @@ constexpr std::string_view fragment_shader_glsl
     "{\n"
     "    FragColor = texture(ourTexture, TexCoord);\n"
     "}\n\0"
-};
-
-constexpr std::string_view shake_post_effect_vertex_shader
-{
-    "#version 330 core\n"
-    "//layout (location = 0) in vec4 vertex; // <vec2 position, vec2 texCoords>\n"
-    "layout (location = 0) in vec3 aPos;\n"
-    "layout (location = 1) in vec4 aColor;\n"
-    "layout (location = 2) in vec2 texCoords;\n"
-    "\n"
-    "out vec2 TexCoords;\n"
-    "\n"
-    "uniform bool  chaos;\n"
-    "uniform bool  confuse;\n"
-    "uniform bool  shake;\n"
-    "uniform float time;\n"
-    "\n"
-    "void main()\n"
-    "{\n"
-    "    gl_Position = vec4(aPos.xy, 0.0f, 1.0f); \n"
-    "    vec2 texture = texCoords;\n"
-    "    if(chaos)\n"
-    "    {\n"
-    "        float strength = 0.3;\n"
-    "        vec2 pos = vec2(texture.x + sin(time) * strength, texture.y + cos(time) * strength);        \n"
-    "        TexCoords = pos;\n"
-    "    }\n"
-    "    else if(confuse)\n"
-    "    {\n"
-    "        TexCoords = vec2(1.0 - texture.x, 1.0 - texture.y);\n"
-    "    }\n"
-    "    else\n"
-    "    {\n"
-    "        TexCoords = texture;\n"
-    "    }\n"
-    "    if (shake)\n"
-    "    {\n"
-    "        float strength = 0.01;\n"
-    "        gl_Position.x += cos(time * 10) * strength;        \n"
-    "        gl_Position.y += cos(time * 15) * strength;        \n"
-    "    }\n"
-    "}\n"
-};
-
-constexpr std::string_view shake_post_effect_fragment_shader
-{
-    "#version 330 core\n"
-    "in  vec2  TexCoord;\n"
-    "in vec4 ourColor;\n"
-    "out vec4  color;\n"
-    "\n"
-    "uniform sampler2D scene;\n"
-    "uniform vec2      offsets[9];\n"
-    "uniform int       edge_kernel[9];\n"
-    "uniform float     blur_kernel[9];\n"
-    "uniform bool chaos;\n"
-    "uniform bool confuse;\n"
-    "uniform bool shake;\n"
-    "\n"
-    "void main()\n"
-    "{\n"
-    "    color = vec4(0.0f);\n"
-    "    vec3 sample[9];\n"
-    "    // 如果使用卷积矩阵，则对纹理的偏移像素进行采样\n"
-    "    if(chaos || shake)\n"
-    "        for(int i = 0; i < 9; i++)\n"
-    "            sample[i] = vec3(texture(scene, TexCoord.st + offsets[i]));\n"
-    "\n"
-    "    // 处理特效\n"
-    "    if(chaos)\n"
-    "    {           \n"
-    "        for(int i = 0; i < 9; i++)\n"
-    "            color += vec4(sample[i] * edge_kernel[i], 0.0f);\n"
-    "        color.a = 1.0f;\n"
-    "    }\n"
-    "    else if(confuse)\n"
-    "    {\n"
-    "        color = vec4(1.0 - texture(scene, TexCoord).rgb, 1.0);\n"
-    "    }\n"
-    "    else if(shake)\n"
-    "    {\n"
-    "        for(int i = 0; i < 9; i++)\n"
-    "            color += vec4(sample[i] * blur_kernel[i], 0.0f);\n"
-    "        color.a = 1.0f;\n"
-    "    }\n"
-    "    else\n"
-    "    {\n"
-    "        color =  texture(scene, TexCoord);\n"
-    "    }\n"
-    "}\n"
 };
 
 constexpr std::string_view kenel_post_effect_fragment_shader
@@ -256,18 +168,21 @@ int main() noexcept
     try
     {
         // fill opengl code here
-        glbind::Program program((glbind::VShader(vertex_shader_glsl)),(glbind::FShader(fragment_shader_glsl)));
-        glbind::Program post_kernel_program((glbind::VShader(vertex_shader_glsl)),(glbind::FShader(kenel_post_effect_fragment_shader)));
-        glbind::Program post_shake_program((glbind::VShader(shake_post_effect_vertex_shader)),(glbind::FShader(shake_post_effect_fragment_shader)));
-        glbind::VertexArray<glbind::VertexBufferType::Static,4,2> vertices(rect_vertices_colorful,rect_indices);
+        graphics::Program program((graphics::VShader(vertex_shader_glsl)),(graphics::FShader(fragment_shader_glsl)));
+        graphics::Program post_kernel_program((graphics::VShader(vertex_shader_glsl)),(graphics::FShader(kenel_post_effect_fragment_shader)));
+        graphics::VertexBuffer<graphics::BufferType::Static,36> vbo(rect_vertices_colorful);
+        graphics::ElementBuffer<graphics::BufferType::Static,6> ebo(rect_indices);
+        graphics::VertexArray vao(vbo,ebo);
+        // position attrib
+        vao.enable_attrib(0,3,9,0,false);
+        // color attrib
+        vao.enable_attrib(1,4,9,3,false);
+        // texture coord attrib
+        vao.enable_attrib(2,2,9,7,false);
 
         program.use();
         program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(0.5f,0.5f,1.0f)));
         post_kernel_program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(0.75f,0.6f,1.0f)));
-
-        // TODO: can't work
-        post_shake_program.set_uniform("chaos",true);
-        post_shake_program.set_uniform("shake",true);
 
         std::array<std::string_view,3> img_pathes
         {
@@ -280,55 +195,55 @@ int main() noexcept
         for(std::size_t i = 0;i < 3;i++)
             images[i] = load_image(img_pathes[i]);
 
-        std::array<std::unique_ptr<glbind::TextureRGBA<glbind::ColorChannelType::RGBA>>,3> textures;
+        std::array<std::unique_ptr<graphics::TextureRGBA>,3> textures;
         for(std::size_t i = 0;i < 3;i++)
         {
             auto& img {images[i]};
-            textures[i] = std::make_unique<glbind::TextureRGBA<glbind::ColorChannelType::RGBA>>(img.data.get(),0,0,img.width,img.height);
+            textures[i] = std::make_unique<graphics::TextureRGBA>(img.data.get(),img.channels,0,0,img.width,img.height);
         }
 
-        glbind::TextureRGB<glbind::ColorChannelType::RGB> frame_tex1(nullptr,0,0,800,600);
-        glbind::FrameRBG frame1(frame_tex1);
+        graphics::TextureRGB frame_tex1(nullptr,3,0,0,800,600);
+        graphics::Frame frame1(frame_tex1);
 
-        glbind::TextureRGB<glbind::ColorChannelType::RGB> frame_tex2(nullptr,0,0,800,600);
-        glbind::FrameRBG frame2(frame_tex2);
+        graphics::TextureRGB frame_tex2(nullptr,3,0,0,800,600);
+        graphics::Frame frame2(frame_tex2);
 
         rkki::test::TimeRecorder recorder;
         
         std::size_t tex_index {0};
         while(true)
         {
-            glbind::Scope([&]()
+            graphics::Scope([&]()
             {
                 // draw obj to frame1
-                glbind::Scope(0,0,800,600,[&]()
+                graphics::Scope(0,0,800,600,[&]()
                 {
                     program.use();
                     program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(0.7f,0.5f,1.0f)));
                     frame1.use();
                     textures[tex_index]->bind();
-                    vertices.draw();
+                    graphics::draw<graphics::Primitives::Triangles>(vao,6);
                 });
 
                 // apply kernel effect & draw to frame2
-                glbind::Scope(0,0,800,600,[&]()
+                graphics::Scope(0,0,800,600,[&]()
                 {
                     frame2.use();
                     post_kernel_program.use();
                     frame_tex1.bind();
                     post_kernel_program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(1.0f,0.9f,1.0f)));
-                    vertices.draw();
+                    graphics::draw<graphics::Primitives::Triangles>(vao,6);
                 });
 
                 // apply shake effect & draw to screen
-                glbind::Scope(0,0,800,600,[&]()
+                graphics::Scope(0,0,800,600,[&]()
                 {
                     glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
                     glClear(GL_COLOR_BUFFER_BIT);
 
                     //post_shake_program.use();
                     frame_tex1.bind();
-                    vertices.draw();
+                    graphics::draw<graphics::Primitives::Triangles>(vao,6);
 
                     glfwPollEvents();
                     glfwSwapBuffers(window);

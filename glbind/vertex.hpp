@@ -1,225 +1,279 @@
 #pragma once
 
-#include "concept.hpp"
 #include "scope.hpp"
+#include <glad/glad.h>
+#include <array>
+#include <concepts>
+#include <stdexcept>
 #include <cstddef>
+#include <type_traits>
 
-namespace rkki::glbind
+namespace graphics
 {
-    //template <VertexBufferType buffer_type,
-    //    size_t vertices_count,size_t indices_count>
-    //class VertexArray
-    //{
-    //private:
-    //    inline static constexpr size_t single_vertex_len {9};
-    //    inline static constexpr size_t single_index_len {3};
-    //    unsigned int vao_id;
-    //    unsigned int vbo_id;
-    //    unsigned int ebo_id;
-    //    using VerticesArray = std::array<float,vertices_count * single_vertex_len>;
-    //    using IndicesArray = std::array<unsigned int,indices_count * single_index_len>;
-    //    VerticesArray vertices;
-    //    IndicesArray indices;
-    //
-    //public:
-    //    VertexArray(const VerticesArray& vertices,const IndicesArray& indices) noexcept
-    //        : vertices(vertices),indices(indices)
-    //    {
-    //        Scope([&]()
-    //        {
-    //            int buffer_type_enum;
-    //            if constexpr(buffer_type == VertexBufferType::Static)
-    //                buffer_type_enum = GL_STATIC_DRAW;
-    //            else if constexpr(buffer_type == VertexBufferType::Dynamic)
-    //                buffer_type_enum = GL_DYNAMIC_DRAW;
-    //            else if constexpr(buffer_type == VertexBufferType::Stream)
-    //                buffer_type_enum = GL_STREAM_DRAW;
-//
-    //            glGenVertexArrays(1,&vao_id);
-    //            glGenBuffers(1,&vbo_id);
-    //            glGenBuffers(1,&ebo_id);
-    //            glBindVertexArray(vao_id);
-    //            glBindBuffer(GL_ARRAY_BUFFER,vbo_id);
-    //            glBufferData(GL_ARRAY_BUFFER,sizeof(vertices),vertices.data(),buffer_type_enum);
-    //            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,ebo_id);
-    //            glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(indices),indices.data(),buffer_type_enum);
-    //            // position attribute
-    //            glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,9 * sizeof(float),(void*)0);
-    //            glEnableVertexAttribArray(0);
-    //            // color attribute
-    //            glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,9 * sizeof(float),(void*)(3 * sizeof(float)));
-    //            glEnableVertexAttribArray(1);
-    //            // texture coord attribute
-    //            glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,9 * sizeof(float),(void*)(7 * sizeof(float)));
-    //            glEnableVertexAttribArray(2);
-    //        });
-    //    }
-//
-    //    VertexArray(VertexArray&) = delete;
-//
-    //    ~VertexArray() noexcept
-    //    {
-    //        glDeleteVertexArrays(1,&vao_id);
-    //        glDeleteBuffers(1,&vbo_id);
-    //    }
-//
-    //    void draw() const noexcept
-    //    {
-    //        Scope([&]()
-    //        {
-    //            glBindVertexArray(vao_id);
-    //            glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
-    //        });
-    //    }
-//
-    //    void update() const noexcept
-    //    {
-    //        Scope([&]()
-    //        {
-    //            unsigned int buffer_type_enum;
-    //            if constexpr(buffer_type == VertexBufferType::Static)
-    //                buffer_type_enum = GL_STATIC_DRAW;
-    //            else if constexpr(buffer_type == VertexBufferType::Dynamic)
-    //                buffer_type_enum = GL_DYNAMIC_DRAW;
-    //            else if constexpr(buffer_type == VertexBufferType::Stream)
-    //                buffer_type_enum = GL_STREAM_DRAW;
-//
-    //            glBindBuffer(GL_ARRAY_BUFFER,get_vbo_id());
-    //            glBufferData(GL_ARRAY_BUFFER,sizeof(vertices),vertices.data(),buffer_type_enum);
-    //        });
-    //    }
-//
-    //    auto get_vao_id() const noexcept
-    //    {
-    //        return vao_id;
-    //    }
-//
-    //    auto get_vbo_id() const noexcept
-    //    {
-    //        return vbo_id;
-    //    }
-//
-    //    auto get_ebo_id() const noexcept
-    //    {
-    //        return ebo_id;
-    //    }
-//
-    //    auto get_vertices_len() const noexcept
-    //    {
-    //        return vertices_count * single_vertex_len;
-    //    }
-//
-    //    auto get_indices_len() const noexcept
-    //    {
-    //        return indices_count * single_index_len;
-    //    }
-//
-    //    auto& get_vertices() noexcept
-    //    {
-    //        return vertices;
-    //    }
-//
-    //    auto& get_indices() noexcept
-    //    {
-    //        return indices;
-    //    }
-    //};
+    enum class BufferType
+    {
+        Static,Dynamic,Stream
+    };
 
-    // TODO: ...
-    template <BufferType type,std::size_t vertices_len>
+    template <BufferType type,std::size_t len>
     class VertexBuffer
     {
     private:
         unsigned int vbo_id;
 
+        /**
+         * @brief Create a vbo object and fill Vertex Buffer in OpenGL
+         * 
+         * @param arr 
+         */
+        void create_vbo(const std::array<float,len>& arr) noexcept
+        {
+            glGenBuffers(1,&vbo_id);
+            update(arr);
+        }
+
     public:
+        /**
+         * @brief Construct a new Vertex Buffer object (with all vertex data = 0.0f)
+         * 
+         */
         VertexBuffer() noexcept
         {
-
+            create_vbo({});
         }
 
+        /**
+         * @brief Construct a new Vertex Buffer object
+         * 
+         * @param arr 
+         */
+        VertexBuffer(const std::array<float,len>& arr) noexcept
+        {
+            create_vbo(arr);
+        }
+
+        /**
+         * @brief VertexBuffer can't be copied
+         * 
+         */
+        VertexBuffer(VertexBuffer&) = delete;
+
+        /**
+         * @brief Destroy the Vertex Buffer object
+         * 
+         */
         ~VertexBuffer() noexcept
         {
-
+            glDeleteBuffers(1,&vbo_id);
         }
 
-        auto get_vbo_id() const noexcept
+        /**
+         * @brief update Vertex Buffer in OpenGL
+         * 
+         * @param arr 
+         */
+        void update(const std::array<float,len>& arr) const noexcept
+        {
+            Scope([&]()
+            {
+                int buffer_type_enum;
+                if constexpr(type == BufferType::Static)
+                    buffer_type_enum = GL_STATIC_DRAW;
+                else if constexpr(type == BufferType::Dynamic)
+                    buffer_type_enum = GL_DYNAMIC_DRAW;
+                else if constexpr(type == BufferType::Stream)
+                    buffer_type_enum = GL_STREAM_DRAW;
+                
+                glBindBuffer(GL_ARRAY_BUFFER,vbo_id);
+                glBufferData(GL_ARRAY_BUFFER,sizeof(arr),arr.data(),buffer_type_enum);
+            });
+        }
+
+        /**
+         * @brief Get the vbo id object
+         * 
+         * @return unsigned int 
+         */
+        unsigned int get_vbo_id() const noexcept
         {
             return vbo_id;
         }
 
-        constexpr auto get_vertices_len() const noexcept
+        /**
+         * @brief Get the len object
+         * 
+         * @return constexpr std::size_t 
+         */
+        constexpr std::size_t get_len() const noexcept
         {
-            return vertices_len;
-        }
-
-        void update(const std::array<float,vertices_len>& vertices) const noexcept
-        {
-
+            return len;
         }
     };
 
-    // TODO: ...
-    template <std::size_t indices_len>
+    template <BufferType type,std::size_t len>
     class ElementBuffer
     {
     private:
         unsigned int ebo_id;
 
     public:
-        ElementBuffer() noexcept
+        /**
+         * @brief Construct a new Element Buffer object
+         * 
+         * @param arr 
+         */
+        ElementBuffer(const std::array<unsigned int,len>& arr) noexcept
         {
-
+            glGenBuffers(1,&ebo_id);
+            update(arr);
         }
 
+        /**
+         * @brief ElementBuffer can't be copied
+         * 
+         */
+        ElementBuffer(ElementBuffer&) = delete;
+
+        /**
+         * @brief Destroy the Element Buffer object
+         * 
+         */
         ~ElementBuffer() noexcept
         {
-
+            glDeleteBuffers(1,&ebo_id);
         }
 
-        auto get_ebo_id() const noexcept
+        /**
+         * @brief update Element Buffer in OpenGL
+         * 
+         * @param arr 
+         */
+        void update(const std::array<unsigned int,len>& arr) const noexcept
+        {
+            Scope([&]()
+            {
+                unsigned int buffer_type_enum;
+                if constexpr(type == BufferType::Static)
+                    buffer_type_enum = GL_STATIC_DRAW;
+                else if constexpr(type == BufferType::Dynamic)
+                    buffer_type_enum = GL_DYNAMIC_DRAW;
+                else if constexpr(type == BufferType::Stream)
+                    buffer_type_enum = GL_STREAM_DRAW;
+
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,ebo_id);
+                glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(arr),arr.data(),buffer_type_enum);
+            });
+        }
+
+        /**
+         * @brief Get the ebo id object
+         * 
+         * @return unsigned int 
+         */
+        unsigned int get_ebo_id() const noexcept
         {
             return ebo_id;
         }
 
-        constexpr auto get_indices_len() const noexcept
+        /**
+         * @brief Get the len object
+         * 
+         * @return constexpr std::size_t 
+         */
+        constexpr std::size_t get_len() const noexcept
         {
-            return indices_len;
-        }
-
-        void update(std::array<float,indices_len>& indices) const noexcept
-        {
-
+            return len;
         }
     };
 
-    template <VertexBufferService VBO,typename EBO>
+    template <typename T>
+    concept VertexBufferService = requires(T t)
+    {
+        {t.get_vbo_id()} -> std::same_as<unsigned int>;
+    };
+
+    template <typename T>
+    concept ElementBufferService = requires(T t)
+    {
+        {t.get_ebo_id()} -> std::same_as<unsigned int>;
+    };
+
+    template <VertexBufferService VBO,ElementBufferService EBO>
     class VertexArray
     {
     private:
+        unsigned int vao_id;
         const VBO& vbo;
         const EBO& ebo;
 
     public:
-        VertexArray(const VBO& vbo) noexcept
-            : vbo(vbo)
+        /**
+         * @brief Construct a new Vertex Array object (with ebo)
+         * 
+         * @param vbo 
+         * @param ebo 
+         */
+        VertexArray(const VBO& vbo,const EBO& ebo) noexcept
+            : vbo(vbo),ebo(ebo)
         {
-
+            glGenVertexArrays(1,&vao_id);
         }
 
+        /**
+         * @brief VertexArray can't be copied
+         * 
+         */
+        VertexArray(VertexArray&) = delete;
+
+        /**
+         * @brief Destroy the Vertex Array object
+         * 
+         */
         ~VertexArray() noexcept
         {
-
+            glDeleteVertexArrays(1,&vao_id);
         }
 
-        void draw() const noexcept
+        /**
+         * @brief Get the vao id object
+         * 
+         * @return unsigned int 
+         */
+        unsigned int get_vao_id() const noexcept
         {
-
+            return vao_id;
         }
 
-        void bind_ebo(const EBO& ebo) noexcept
+        unsigned int get_binding_vbo_id() const noexcept
         {
-            this->ebo = ebo;
+            return vbo.get_vbo_id();
+        }
+
+        unsigned int get_binding_ebo_id() const noexcept
+        {
+            return ebo.get_ebo_id();
+        }
+
+        /**
+         * @brief               bind vertex attrib pointer for OpenGL
+         * 
+         * @param index         the index of vertex data (used in OpenGL GLSL) 
+         * @param len           the lenth of this attrib (by count)
+         * @param vertex_len    the lenth of a single vertex data (by count)
+         * @param offset        offset of this attrib in the whole single vertex data
+         * @param normalized    if need to normalize vertices data (int to float between [-1,1] or [0,1])
+         */
+        void enable_attrib(unsigned int index,std::size_t len,std::size_t vertex_len,std::size_t offset,bool normalized = false) const noexcept
+        {
+            Scope([&]()
+            {
+                glBindBuffer(GL_ARRAY_BUFFER,vbo.get_vbo_id());
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,ebo.get_ebo_id());
+                glBindVertexArray(vao_id);
+                
+                glVertexAttribPointer(index,len,GL_FLOAT,normalized,vertex_len * sizeof(float),(void*)(offset * sizeof(float)));
+                glEnableVertexAttribArray(index);
+            });
         }
     };
 }

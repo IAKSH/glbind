@@ -1,12 +1,18 @@
 #pragma once
 
-#include "concept.hpp"
 #include "scope.hpp"
-#include "texture.hpp"
 #include <stdexcept>
 
-namespace rkki::glbind
+namespace graphics
 {
+    template <typename T>
+    concept TextureService = requires(T t)
+    {
+        {t.get_texture_id()} -> std::same_as<unsigned int>;
+        {t.get_width()} -> std::same_as<unsigned int>;
+        {t.get_height()} -> std::same_as<unsigned int>;
+    };
+
     template <TextureService T>
     class Frame
     {
@@ -14,8 +20,14 @@ namespace rkki::glbind
         unsigned int fbo_id;
         unsigned int rbo_id;
         T& texture;
-
+    
     public:
+        /**
+         * @brief Construct a new Frame object
+         * @warning throw std::runtime_error when OpenGL framebuffer not complete
+         *
+         * @param t 
+         */
         Frame(T& t) noexcept(false)
             : texture(t)
         {
@@ -23,17 +35,6 @@ namespace rkki::glbind
             {
                 glGenFramebuffers(1,&fbo_id);
                 glBindFramebuffer(GL_FRAMEBUFFER,fbo_id);
-
-                /*
-                // create texture
-                glGenTextures(1,&texture_id);
-                glBindTexture(GL_TEXTURE_2D,texture_id);
-                glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,w,h,0,GL_RGB,GL_UNSIGNED_BYTE,nullptr);
-                glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-                glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-                //glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-                //glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-                */
 
                 // bind texture to fbo
                 glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,texture.get_texture_id(),0);
@@ -52,49 +53,87 @@ namespace rkki::glbind
             });
         }
 
+        /**
+         * @brief Frame can't be copied
+         * 
+         */
         Frame(Frame&) = delete;
 
+        /**
+         * @brief Destroy the Frame object
+         * 
+         */
         ~Frame() noexcept
         {
             glDeleteRenderbuffers(1,&rbo_id);
             glDeleteFramebuffers(1,&fbo_id);
         }
 
+        /**
+         * @brief bind this framebuffer to OpenGL
+         * 
+         */
         void use() const noexcept
         {
             glBindFramebuffer(GL_FRAMEBUFFER,fbo_id);
         }
 
+        /**
+         * @brief bind this framebuffer to OpenGL (output only)
+         * 
+         */
         void use_as_out() const noexcept
         {
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER,fbo_id);
         }
 
+        /**
+         * @brief bind this framebuffer to OpenGL (read only)
+         * 
+         */
         void use_as_read() const noexcept
         {
             glBindFramebuffer(GL_READ_FRAMEBUFFER,fbo_id);
         }
 
-        auto get_fbo_id() const noexcept
+        /**
+         * @brief Get the fbo id object
+         * 
+         * @return unsigned int 
+         */
+        unsigned int get_fbo_id() const noexcept
         {
             return fbo_id;
         }
 
-        auto get_texture_id() const noexcept
+        /**
+         * @brief Get the texture id object
+         * 
+         * @return unsigned int 
+         */
+        unsigned int get_texture_id() const noexcept
         {
             return texture.get_texture_id();
         }
 
-        auto get_width() const noexcept
+        /**
+         * @brief Get the width object
+         * 
+         * @return unsigned int 
+         */
+        unsigned int get_width() const noexcept
         {
             return texture.get_width();
         }
 
-        auto get_height() const noexcept
+        /**
+         * @brief Get the height object
+         * 
+         * @return unsigned int 
+         */
+        unsigned int get_height() const noexcept
         {
             return texture.get_height();
         }
     };
-
-    using FrameRBG = Frame<TextureRGB<glbind::ColorChannelType::RGB>>;
 }
