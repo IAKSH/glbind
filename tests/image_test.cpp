@@ -204,7 +204,7 @@ int main() noexcept
         rkki::test::TimeRecorder recorder;
         
         std::size_t tex_index {0};
-        while(true)
+        for(std::size_t i {0};i < 165;i++)
         {
             graphics::Scope([&]()
             {

@@ -1,5 +1,4 @@
 #include "timer.hpp"
-#include <image.hpp>
 #include <camera.hpp>
 #include <frame.hpp>
 #include <primitive.hpp>
@@ -49,13 +48,14 @@ constexpr std::string_view vertex_shader_glsl
     "layout (location = 2) in vec2 aTexCoord;\n"
     "\n"
     "uniform mat4 transform;\n"
+    "uniform mat4 cameraTrans;\n"
     "\n"
     "out vec4 ourColor;\n"
     "out vec2 TexCoord;\n"
     "\n"
     "void main()\n"
     "{\n"
-    "gl_Position = transform * vec4(aPos, 1.0);\n"
+    "gl_Position = cameraTrans * transform * vec4(aPos, 1.0);\n"
     "ourColor = aColor;\n"
     "TexCoord = vec2(aTexCoord.x, 1.0 - aTexCoord.y);\n"
     "}\n\0"
@@ -145,13 +145,22 @@ static constexpr std::array<unsigned int,6> rect_indices
     1,2,3
 };
 
-std::unique_ptr<graphics::extension::Image> load_image(std::string_view path) noexcept(false)
+struct Image
 {
-    int width,height,channels;
-    std::unique_ptr<unsigned char[]> data(std::unique_ptr<unsigned char[]>(stbi_load(path.data(),&width,&height,&channels,0)));
-    if(!data)
+    std::unique_ptr<unsigned char[]> data;
+    int width;
+    int height;
+    int channels;
+};
+
+Image load_image(std::string_view path) noexcept(false)
+{
+    Image img;
+    img.data = std::unique_ptr<unsigned char[]>(stbi_load(path.data(),&img.width,&img.height,&img.channels,0));
+    if(!img.data)
         throw std::runtime_error("Failed to load image");
-    return std::make_unique<graphics::extension::Image>(std::move(data),width,height,channels);
+
+    return img;
 }
 
 int main() noexcept
@@ -173,6 +182,12 @@ int main() noexcept
         // texture coord attrib
         vao.enable_attrib(2,2,9,7,false);
 
+        // camera test
+        graphics::extension::Camera cam1;
+        graphics::extension::Camera cam2;
+        cam1.set_position({0.5f,0.0f,4.0f});
+        cam2.set_position({0.0f,0.5f,2.5f});
+
         program.use();
         program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(0.5f,0.5f,1.0f)));
         post_kernel_program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(0.75f,0.6f,1.0f)));
@@ -184,7 +199,7 @@ int main() noexcept
             "E:\\Programming-Projects\\glbind\\tests\\img\\3.png"
         };
 
-        std::array<std::unique_ptr<graphics::extension::Image>,3> images;
+        std::array<Image,3> images;
         for(std::size_t i = 0;i < 3;i++)
             images[i] = load_image(img_pathes[i]);
 
@@ -192,7 +207,7 @@ int main() noexcept
         for(std::size_t i = 0;i < 3;i++)
         {
             auto& img {images[i]};
-            textures[i] = std::make_unique<graphics::TextureRGBA>(img->get_data(),img->get_channels(),0,0,img->get_width(),img->get_height());
+            textures[i] = std::make_unique<graphics::TextureRGBA>(img.data.get(),img.channels,0,0,img.width,img.height);
         }
 
         graphics::TextureRGB frame_tex1(nullptr,3,0,0,800,600);
@@ -204,8 +219,16 @@ int main() noexcept
         rkki::test::TimeRecorder recorder;
         
         std::size_t tex_index {0};
-        while(true)
+        for(std::size_t i = 0;i < 240;i++)
         {
+            // move camera
+            cam1.rotate(0.0f,sin(glfwGetTime()) / 100.0f,0.0f);
+            auto pos {cam1.get_position()};
+            pos[1] += sin(glfwGetTime() * 5.0f) / 500.0f;
+            cam1.set_position(pos);
+
+            cam2.rotate(cos(glfwGetTime()) / 50.0f,cos(glfwGetTime()) / 50.0f,0.1f);
+
             graphics::Scope([&]()
             {
                 // draw obj to frame1
@@ -213,6 +236,7 @@ int main() noexcept
                 {
                     program.use();
                     program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(0.7f,0.5f,1.0f)) * glm::rotate(glm::mat4(1.0f),static_cast<float>(sin(glfwGetTime())),glm::vec3(0.0f,1.0f,0.0f)));
+                    program.set_uniform("cameraTrans",cam1.get_matrix());
                     frame1.use();
                     glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
                     glClear(GL_COLOR_BUFFER_BIT);
@@ -227,6 +251,7 @@ int main() noexcept
                     post_kernel_program.use();
                     frame_tex1.bind();
                     post_kernel_program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(1.0f,0.9f,1.0f)));
+                    post_kernel_program.set_uniform("cameraTrans",cam2.get_matrix());
                     graphics::draw<graphics::Primitives::Triangles>(vao,6);
                 });
 
