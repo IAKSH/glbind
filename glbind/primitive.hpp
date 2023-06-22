@@ -2,7 +2,6 @@
 
 #include "vertex.hpp"
 #include <exception>
-#include <windef.h>
 
 namespace graphics
 {
