@@ -135,5 +135,112 @@ namespace graphics
         {
             return texture.get_height();
         }
+
+        void fill_color(float r,float g,float b,float a) const noexcept
+        {
+            Scope([&]()
+            {
+                use();
+                glClearColor(r,g,b,a);
+            });
+        }
+
+        void clear_color_buffer() const noexcept
+        {
+            Scope([&]()
+            {
+                use();
+                glClear(GL_COLOR_BUFFER_BIT);
+            });
+        }
+
+        void clear_stencil_buffer() const noexcept
+        {
+            Scope([&]()
+            {
+                use();
+                glClear(GL_STENCIL_BUFFER_BIT);
+            });
+        }
+
+        void clear_depth_buffer() const noexcept
+        {
+            Scope([&]()
+            {
+                use();
+                glClear(GL_DEPTH_BUFFER_BIT);
+            });
+        }
+    };
+
+    class ScreenFrame
+    {
+    public:
+        ScreenFrame() noexcept = delete;
+
+        static void use() noexcept
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER,0);
+        }
+
+        static void use_as_read() noexcept
+        {
+            glBindFramebuffer(GL_READ_FRAMEBUFFER,0);
+        }
+
+        static void use_as_out() noexcept
+        {
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
+        }
+
+        static unsigned int get_width() noexcept
+        {
+            int dims[4];
+            glGetIntegerv(GL_VIEWPORT,dims);
+            return dims[2];
+        }
+
+        static unsigned int get_height() noexcept
+        {
+            int dims[4];
+            glGetIntegerv(GL_VIEWPORT,dims);
+            return dims[3];
+        }
+
+        static void fill_color(float r,float g,float b,float a) noexcept
+        {
+            Scope([&]()
+            {
+                use();
+                glClearColor(r,g,b,a);
+            });
+        }
+
+        static void clear_color_buffer() noexcept
+        {
+            Scope([&]()
+            {
+                use();
+                glClear(GL_COLOR_BUFFER_BIT);
+            });
+        }
+
+        static void clear_stencil_buffer() noexcept
+        {
+            Scope([&]()
+            {
+                use();
+                glClear(GL_STENCIL_BUFFER_BIT);
+            });
+        }
+
+        static void clear_depth_buffer() noexcept
+        {
+            Scope([&]()
+            {
+                use();
+                glClear(GL_DEPTH_BUFFER_BIT);
+            });
+        }
     };
 }

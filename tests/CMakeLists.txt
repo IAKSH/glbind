@@ -26,13 +26,7 @@ add_dependencies(camera_test glbind glfw)
 target_include_directories(camera_test PUBLIC {$CMAKE_CURRENT_LIST_DIR}/vendor/glfw/include)
 target_link_libraries(camera_test PUBLIC glbind glbind_ext glfw stb)
 
-add_executable(image_test image_test.cpp)
-add_dependencies(image_test glbind glfw)
-target_include_directories(image_test PUBLIC {$CMAKE_CURRENT_LIST_DIR}/vendor/glfw/include)
-target_link_libraries(image_test PUBLIC glbind glbind_ext glfw stb)
-
 add_test(NAME vertex_test COMMAND vertex_test)
 add_test(NAME texture_test COMMAND texture_test)
 add_test(NAME frame_test COMMAND frame_test)
 add_test(NAME camera_test COMMAND camera_test)
-add_test(NAME image_test COMMAND image_test)

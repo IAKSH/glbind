@@ -49,13 +49,14 @@ constexpr std::string_view vertex_shader_glsl
     "layout (location = 2) in vec2 aTexCoord;\n"
     "\n"
     "uniform mat4 transform;\n"
+    "uniform mat4 cameraTrans;\n"
     "\n"
     "out vec4 ourColor;\n"
     "out vec2 TexCoord;\n"
     "\n"
     "void main()\n"
     "{\n"
-    "gl_Position = transform * vec4(aPos, 1.0);\n"
+    "gl_Position = cameraTrans * transform * vec4(aPos, 1.0);\n"
     "ourColor = aColor;\n"
     "TexCoord = vec2(aTexCoord.x, 1.0 - aTexCoord.y);\n"
     "}\n\0"
@@ -73,7 +74,7 @@ constexpr std::string_view fragment_shader_glsl
     "\n"
     "void main()\n"
     "{\n"
-    "    FragColor = texture(ourTexture, TexCoord);\n"
+    "    FragColor = vec4(vec3(gl_FragCoord.z), 1.0) * texture(ourTexture, TexCoord);\n"
     "}\n\0"
 };
 
@@ -145,6 +146,29 @@ static constexpr std::array<unsigned int,6> rect_indices
     1,2,3
 };
 
+static constexpr std::array<float,72> cube_vertices
+{
+    1.0f,  1.0f,  0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,  // top right
+    1.0f,  -1.0f, 0.0f,1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,  // bottom right
+    -1.0f, -1.0f, 0.0f,1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,  // bottom left
+    -1.0f, 1.0f,  0.0f,1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,   // top left
+
+    1.0f,  1.0f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,  // top right
+    1.0f,  -1.0f, 1.0f,1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,  // bottom right
+    -1.0f, -1.0f, 1.0f,1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,  // bottom left
+    -1.0f, 1.0f,  1.0f,1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f   // top left
+};
+
+static constexpr std::array<unsigned int,36> cube_indices
+{
+    0,1,3,1,2,3,
+    0,3,7,0,4,7,
+    0,1,5,0,5,4,
+    1,2,6,1,5,6,
+    2,3,6,3,7,6,
+    4,5,6,4,7,6
+};
+
 std::unique_ptr<graphics::extension::Image> load_image(std::string_view path) noexcept(false)
 {
     int width,height,channels;
@@ -163,6 +187,7 @@ int main() noexcept
         // fill opengl code here
         graphics::Program program((graphics::VShader(vertex_shader_glsl)),(graphics::FShader(fragment_shader_glsl)));
         graphics::Program post_kernel_program((graphics::VShader(vertex_shader_glsl)),(graphics::FShader(kenel_post_effect_fragment_shader)));
+
         graphics::VertexBuffer<graphics::BufferType::Static,36> vbo(rect_vertices_colorful);
         graphics::ElementBuffer<graphics::BufferType::Static,6> ebo(rect_indices);
         graphics::VertexArray vao(vbo,ebo);
@@ -172,6 +197,22 @@ int main() noexcept
         vao.enable_attrib(1,4,9,3,false);
         // texture coord attrib
         vao.enable_attrib(2,2,9,7,false);
+
+        graphics::VertexBuffer<graphics::BufferType::Static,72> cube_vbo(cube_vertices);
+        graphics::ElementBuffer<graphics::BufferType::Static,36> cube_ebo(cube_indices);
+        graphics::VertexArray cube_vao(cube_vbo,cube_ebo);
+        // position attrib
+        cube_vao.enable_attrib(0,3,9,0,false);
+        // color attrib
+        cube_vao.enable_attrib(1,4,9,3,false);
+        // texture coord attrib
+        cube_vao.enable_attrib(2,2,9,7,false);
+
+        // camera test
+        graphics::extension::Camera cam1;
+        graphics::extension::Camera cam2;
+        cam1.set_position({0.5f,0.0f,2.5f});
+        cam2.set_position({0.0f,0.0f,3.5f});
 
         program.use();
         program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(0.5f,0.5f,1.0f)));
@@ -198,54 +239,57 @@ int main() noexcept
         graphics::TextureRGB frame_tex1(nullptr,3,0,0,800,600);
         graphics::Frame frame1(frame_tex1);
 
-        graphics::TextureRGB frame_tex2(nullptr,3,0,0,800,600);
-        graphics::Frame frame2(frame_tex2);
-
-        rkki::test::TimeRecorder recorder;
+        test::TimeRecorder recorder;
         
         std::size_t tex_index {0};
+
+        graphics::set_viewport(0,0,800,600);
+        graphics::enable_depth_test();
+        
         while(true)
-        {
+        {   
+            // move camera
+            cam1.rotate(0.0f,sin(glfwGetTime()) / 100.0f,0.0f);
+            auto pos {cam1.get_position()};
+            pos[1] += sin(glfwGetTime() * 5.0f) / 500.0f;
+            cam1.set_position(pos);
+
+            cam2.rotate(cos(glfwGetTime()) / 50.0f,cos(glfwGetTime()) / 50.0f,0.1f);
+
             graphics::Scope([&]()
             {
                 // draw obj to frame1
-                graphics::Scope(0,0,800,600,[&]()
+                graphics::Scope([&]()
                 {
                     program.use();
-                    program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(0.7f,0.5f,1.0f)) * glm::rotate(glm::mat4(1.0f),static_cast<float>(sin(glfwGetTime())),glm::vec3(0.0f,1.0f,0.0f)));
+                    program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(0.7f,0.5f,1.0f)) * glm::rotate(glm::mat4(1.0f),static_cast<float>(cos(glfwGetTime())),glm::vec3(0.0f,1.0f,0.0f)));
+                    program.set_uniform("cameraTrans",cam1.get_matrix());
                     frame1.use();
-                    glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
-                    glClear(GL_COLOR_BUFFER_BIT);
+                    frame1.fill_color(1.0f, 1.0f, 1.0f, 1.0f);
+                    frame1.clear_color_buffer();
+                    frame1.clear_depth_buffer();
                     textures[tex_index]->bind();
-                    graphics::draw<graphics::Primitives::Triangles>(vao,6);
+                    graphics::draw<graphics::Primitives::Triangles>(cube_vao,36);
                 });
 
-                // apply kernel effect & draw to frame2
-                graphics::Scope(0,0,800,600,[&]()
+                // apply effect & draw to screen
+                graphics::Scope([&]()
                 {
-                    frame2.use();
                     post_kernel_program.use();
+                    post_kernel_program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(0.9f,0.9f,1.2f)) * glm::rotate(glm::mat4(1.0f),static_cast<float>(sin(glfwGetTime()) / 1.5f),glm::vec3(1.0f,0.5f,0.0f)));
+                    post_kernel_program.set_uniform("cameraTrans",cam2.get_matrix());
+                    graphics::ScreenFrame::fill_color(0.4f, 0.3f, 0.5f, 0.7f);
+                    graphics::ScreenFrame::clear_color_buffer();
+                    graphics::ScreenFrame::clear_depth_buffer();
                     frame_tex1.bind();
-                    post_kernel_program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(1.0f,0.9f,1.0f)));
-                    graphics::draw<graphics::Primitives::Triangles>(vao,6);
+                    graphics::draw<graphics::Primitives::Triangles>(cube_vao,36);
                 });
 
-                // apply shake effect & draw to screen
-                graphics::Scope(0,0,800,600,[&]()
-                {
-                    glClearColor(0.4f, 0.3f, 0.5f, 0.7f); 
-                    glClear(GL_COLOR_BUFFER_BIT);
-
-                    //post_shake_program.use();
-                    frame_tex1.bind();
-                    graphics::draw<graphics::Primitives::Triangles>(vao,6);
-
-                    glfwPollEvents();
-                    glfwSwapBuffers(window);
-                });
+                glfwPollEvents();
+                glfwSwapBuffers(window);
             });
 
-            if(recorder.get_time_span_ms() >= rkki::test::MilliSeconds(1000))
+            if(recorder.get_time_span_ms() >= test::MilliSeconds(1000))
             {
                 ++tex_index;
                 recorder.update();

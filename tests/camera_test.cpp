@@ -1,4 +1,5 @@
 #include "timer.hpp"
+#include <image.hpp>
 #include <camera.hpp>
 #include <frame.hpp>
 #include <primitive.hpp>
@@ -145,22 +146,36 @@ static constexpr std::array<unsigned int,6> rect_indices
     1,2,3
 };
 
-struct Image
+static constexpr std::array<float,72> cube_vertices
 {
-    std::unique_ptr<unsigned char[]> data;
-    int width;
-    int height;
-    int channels;
+    1.0f,  1.0f,  0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,  // top right
+    1.0f,  -1.0f, 0.0f,1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,  // bottom right
+    -1.0f, -1.0f, 0.0f,1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,  // bottom left
+    -1.0f, 1.0f,  0.0f,1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,   // top left
+
+    1.0f,  1.0f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,  // top right
+    1.0f,  -1.0f, 1.0f,1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,  // bottom right
+    -1.0f, -1.0f, 1.0f,1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,  // bottom left
+    -1.0f, 1.0f,  1.0f,1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f   // top left
 };
 
-Image load_image(std::string_view path) noexcept(false)
+static constexpr std::array<unsigned int,36> cube_indices
 {
-    Image img;
-    img.data = std::unique_ptr<unsigned char[]>(stbi_load(path.data(),&img.width,&img.height,&img.channels,0));
-    if(!img.data)
-        throw std::runtime_error("Failed to load image");
+    0,1,3,1,2,3,
+    0,3,7,0,4,7,
+    0,1,5,0,5,4,
+    1,2,6,1,5,6,
+    2,3,6,3,7,6,
+    4,5,6,4,7,6
+};
 
-    return img;
+std::unique_ptr<graphics::extension::Image> load_image(std::string_view path) noexcept(false)
+{
+    int width,height,channels;
+    std::unique_ptr<unsigned char[]> data(std::unique_ptr<unsigned char[]>(stbi_load(path.data(),&width,&height,&channels,0)));
+    if(!data)
+        throw std::runtime_error("Failed to load image");
+    return std::make_unique<graphics::extension::Image>(std::move(data),width,height,channels);
 }
 
 int main() noexcept
@@ -172,6 +187,7 @@ int main() noexcept
         // fill opengl code here
         graphics::Program program((graphics::VShader(vertex_shader_glsl)),(graphics::FShader(fragment_shader_glsl)));
         graphics::Program post_kernel_program((graphics::VShader(vertex_shader_glsl)),(graphics::FShader(kenel_post_effect_fragment_shader)));
+
         graphics::VertexBuffer<graphics::BufferType::Static,36> vbo(rect_vertices_colorful);
         graphics::ElementBuffer<graphics::BufferType::Static,6> ebo(rect_indices);
         graphics::VertexArray vao(vbo,ebo);
@@ -182,11 +198,21 @@ int main() noexcept
         // texture coord attrib
         vao.enable_attrib(2,2,9,7,false);
 
+        graphics::VertexBuffer<graphics::BufferType::Static,72> cube_vbo(cube_vertices);
+        graphics::ElementBuffer<graphics::BufferType::Static,36> cube_ebo(cube_indices);
+        graphics::VertexArray cube_vao(cube_vbo,cube_ebo);
+        // position attrib
+        cube_vao.enable_attrib(0,3,9,0,false);
+        // color attrib
+        cube_vao.enable_attrib(1,4,9,3,false);
+        // texture coord attrib
+        cube_vao.enable_attrib(2,2,9,7,false);
+
         // camera test
         graphics::extension::Camera cam1;
         graphics::extension::Camera cam2;
-        cam1.set_position({0.5f,0.0f,4.0f});
-        cam2.set_position({0.0f,0.5f,2.5f});
+        cam1.set_position({0.5f,0.0f,2.5f});
+        cam2.set_position({0.0f,0.0f,3.5f});
 
         program.use();
         program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(0.5f,0.5f,1.0f)));
@@ -199,7 +225,7 @@ int main() noexcept
             "E:\\Programming-Projects\\glbind\\tests\\img\\3.png"
         };
 
-        std::array<Image,3> images;
+        std::array<std::unique_ptr<graphics::extension::Image>,3> images;
         for(std::size_t i = 0;i < 3;i++)
             images[i] = load_image(img_pathes[i]);
 
@@ -207,20 +233,18 @@ int main() noexcept
         for(std::size_t i = 0;i < 3;i++)
         {
             auto& img {images[i]};
-            textures[i] = std::make_unique<graphics::TextureRGBA>(img.data.get(),img.channels,0,0,img.width,img.height);
+            textures[i] = std::make_unique<graphics::TextureRGBA>(img->get_data(),img->get_channels(),0,0,img->get_width(),img->get_height());
         }
 
         graphics::TextureRGB frame_tex1(nullptr,3,0,0,800,600);
         graphics::Frame frame1(frame_tex1);
 
-        graphics::TextureRGB frame_tex2(nullptr,3,0,0,800,600);
-        graphics::Frame frame2(frame_tex2);
-
-        rkki::test::TimeRecorder recorder;
+        test::TimeRecorder recorder;
         
         std::size_t tex_index {0};
+        
         for(std::size_t i = 0;i < 240;i++)
-        {
+        {   
             // move camera
             cam1.rotate(0.0f,sin(glfwGetTime()) / 100.0f,0.0f);
             auto pos {cam1.get_position()};
@@ -231,46 +255,41 @@ int main() noexcept
 
             graphics::Scope([&]()
             {
+                graphics::enable_depth_test();
                 // draw obj to frame1
                 graphics::Scope(0,0,800,600,[&]()
                 {
                     program.use();
-                    program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(0.7f,0.5f,1.0f)) * glm::rotate(glm::mat4(1.0f),static_cast<float>(sin(glfwGetTime())),glm::vec3(0.0f,1.0f,0.0f)));
+                    program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(0.7f,0.5f,1.0f)) * glm::rotate(glm::mat4(1.0f),static_cast<float>(cos(glfwGetTime())),glm::vec3(0.0f,1.0f,0.0f)));
                     program.set_uniform("cameraTrans",cam1.get_matrix());
                     frame1.use();
-                    glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
-                    glClear(GL_COLOR_BUFFER_BIT);
+                    frame1.fill_color(1.0f, 1.0f, 1.0f, 1.0f);
+                    frame1.clear_color_buffer();
                     textures[tex_index]->bind();
-                    graphics::draw<graphics::Primitives::Triangles>(vao,6);
+                    graphics::draw<graphics::Primitives::Triangles>(cube_vao,36);
                 });
 
-                // apply kernel effect & draw to frame2
+                // apply effect & draw to screen
                 graphics::Scope(0,0,800,600,[&]()
                 {
-                    frame2.use();
-                    post_kernel_program.use();
-                    frame_tex1.bind();
-                    post_kernel_program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(1.0f,0.9f,1.0f)));
-                    post_kernel_program.set_uniform("cameraTrans",cam2.get_matrix());
-                    graphics::draw<graphics::Primitives::Triangles>(vao,6);
-                });
-
-                // apply shake effect & draw to screen
-                graphics::Scope(0,0,800,600,[&]()
-                {
-                    glClearColor(0.4f, 0.3f, 0.5f, 0.7f); 
-                    glClear(GL_COLOR_BUFFER_BIT);
+                    graphics::ScreenFrame::fill_color(0.4f, 0.3f, 0.5f, 0.7f);
+                    graphics::ScreenFrame::clear_color_buffer();
+                    graphics::ScreenFrame::clear_depth_buffer();
+                    frame1.clear_depth_buffer();
 
                     //post_shake_program.use();
+                    post_kernel_program.use();
+                    post_kernel_program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(0.9f,0.9f,1.2f)) * glm::rotate(glm::mat4(1.0f),static_cast<float>(sin(glfwGetTime()) / 1.5f),glm::vec3(1.0f,0.5f,0.0f)));
+                    post_kernel_program.set_uniform("cameraTrans",cam2.get_matrix());
                     frame_tex1.bind();
-                    graphics::draw<graphics::Primitives::Triangles>(vao,6);
+                    graphics::draw<graphics::Primitives::Triangles>(cube_vao,36);
 
                     glfwPollEvents();
                     glfwSwapBuffers(window);
                 });
             });
 
-            if(recorder.get_time_span_ms() >= rkki::test::MilliSeconds(1000))
+            if(recorder.get_time_span_ms() >= test::MilliSeconds(1000))
             {
                 ++tex_index;
                 recorder.update();

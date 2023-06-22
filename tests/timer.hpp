@@ -4,7 +4,7 @@
 #include <chrono>
 #include <thread>
 
-namespace rkki::test
+namespace test
 {
     template <typename T,typename U>
     constexpr bool is_same()
