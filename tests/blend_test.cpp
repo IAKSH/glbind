@@ -15,7 +15,6 @@
 #include <iostream>
 #include <memory>
 #include <chrono>
-#include <random>
 
 static GLFWwindow* window {nullptr};
 
@@ -230,8 +229,7 @@ int main() noexcept
         graphics::extension::Camera cam1;
         graphics::extension::Camera cam2;
         cam1.set_position({0.5f,0.0f,2.5f});
-        //cam2.set_position({0.0f,0.0f,3.5f});
-        cam2.set_position({0.0f,0.0f,0.5f});
+        cam2.set_position({0.0f,0.0f,3.5f});
 
         program.use();
         program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(0.5f,0.5f,1.0f)));
@@ -255,7 +253,7 @@ int main() noexcept
             textures[i] = std::make_unique<graphics::TextureRGBA>(img->get_data(),img->get_channels(),0,0,img->get_width(),img->get_height());
         }
 
-        std::unique_ptr<graphics::extension::Image> grass_image{load_image("E:\\Programming-Projects\\glbind\\tests\\img\\huaji.png")};
+        std::unique_ptr<graphics::extension::Image> grass_image{load_image("E:\\Programming-Projects\\glbind\\tests\\img\\grass.png")};
         graphics::TextureRGBA grass_texture(grass_image->get_data(),grass_image->get_channels(),0,0,grass_image->get_width(),grass_image->get_height());
 
         graphics::TextureRGB frame_tex1(nullptr,3,0,0,800,600);
@@ -269,11 +267,7 @@ int main() noexcept
         graphics::enable_depth_test();
         graphics::enable_blend(graphics::BlendFuncType::SourceAlpha,graphics::BlendFuncType::OneMinusSourceAlpha);
         
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_real_distribution<> dis(0.0,0.01);
-        
-        while(true)
+        for(int i = 0;i < 240;i++)
         {   
             // move camera
             cam1.rotate(0.0f,sin(glfwGetTime()) / 100.0f,0.0f);
@@ -281,9 +275,7 @@ int main() noexcept
             pos[1] += sin(glfwGetTime() * 5.0f) / 500.0f;
             cam1.set_position(pos);
 
-            //cam2.rotate(cos(glfwGetTime()) / 50.0f,cos(glfwGetTime()) / 50.0f,cos(glfwGetTime()) / 10.0f);
-            cam2.rotate(0.1f,0.0f,0.0f);
-            cam2.set_fov(75.0f);
+            cam2.rotate(cos(glfwGetTime()) / 50.0f,cos(glfwGetTime()) / 50.0f,cos(glfwGetTime()) / 10.0f);
 
             graphics::Scope([&]()
             {
@@ -308,9 +300,23 @@ int main() noexcept
                     graphics::Scope([&]()
                     {
                         post_kernel_program.use();
-                        post_kernel_program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(2.0f,2.0f,4.0f)));
+                        post_kernel_program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(0.9f,0.9f,1.2f)) * glm::rotate(glm::mat4(1.0f),static_cast<float>(sin(glfwGetTime()) / 1.5f),glm::vec3(1.0f,0.5f,0.0f)));
                         post_kernel_program.set_uniform("cameraTrans",cam2.get_matrix());
                         frame_tex1.bind();
+
+                        graphics::enable_stencil_test();
+                        graphics::set_stencil_op(graphics::StencilOpType::Keep,graphics::StencilOpType::Keep,graphics::StencilOpType::Replace);
+                        graphics::set_stencil_func(graphics::TestFuncType::Always,1,0xFF);
+                        graphics::set_stencil_mask(0xFF);
+
+                        graphics::draw<graphics::Primitives::Triangles>(cube_vao,36);
+
+                        graphics::set_stencil_func(graphics::TestFuncType::Notequal,1,0xFF);
+                        graphics::set_stencil_mask(0x00);
+
+                        only_red_program.use();
+                        only_red_program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(0.91f,0.91f,1.21f)) * glm::rotate(glm::mat4(1.0f),static_cast<float>(sin(glfwGetTime()) / 1.5f),glm::vec3(1.0f,0.5f,0.0f)));
+                        only_red_program.set_uniform("cameraTrans",cam2.get_matrix());
                         graphics::draw<graphics::Primitives::Triangles>(cube_vao,36);
                     });
 
@@ -323,7 +329,7 @@ int main() noexcept
                 
                         for(std::size_t i = 0;i < 100;i++)
                         {
-                            program.set_uniform("transform",glm::translate(glm::mat4(1.0f),glm::vec3((i % 10) * 0.2f - 1.0f + dis(gen),(i / 10) * 0.2f - 1.0f + dis(gen),1.0f + dis(gen))) * glm::scale(glm::mat4(1.0f),glm::vec3(0.1f,0.1f,1.0f)));
+                            program.set_uniform("transform",glm::translate(glm::mat4(1.0f),glm::vec3((i % 10) * 0.2f - 1.0f,(i / 10) * 0.2f - 1.0f,1.0f)) * glm::scale(glm::mat4(1.0f),glm::vec3(0.1f,0.1f,1.0f)));
                             graphics::draw<graphics::Primitives::Triangles>(vao,6);
                         }
                     });

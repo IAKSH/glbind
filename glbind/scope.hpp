@@ -176,8 +176,6 @@ namespace graphics
         Scope(func);
     }
 
-    // TODO: 以下的函数需要在scope中实现复原
-
     void set_viewport(int x,int y,int w,int h) noexcept
     {
         glViewport(x,y,w,h);
@@ -283,5 +281,40 @@ namespace graphics
     inline void disable_stencil_test() noexcept
     {
         glDisable(GL_STENCIL_TEST);
+    }
+
+    enum class BlendFuncType
+    {
+        Zero = GL_ZERO,
+        One = GL_ONE,
+        SourceColor = GL_SRC_COLOR,
+        OneMinusSourceColor = GL_ONE_MINUS_SRC_COLOR,
+        DestinationColor = GL_DST_COLOR,
+        OneMinusDestinationColor = GL_ONE_MINUS_DST_COLOR,
+        SourceAlpha = GL_SRC_ALPHA,
+        OneMinusSourceAlpha = GL_ONE_MINUS_SRC_ALPHA,
+        DestinationAlpha = GL_DST_ALPHA,
+        OneMinusDestinationAlpha = GL_ONE_MINUS_DST_ALPHA,
+        ConstantColor = GL_CONSTANT_COLOR,
+        OneMinusConstantColor = GL_ONE_MINUS_CONSTANT_COLOR,
+        ConstantAlpha = GL_CONSTANT_ALPHA,
+        OneMinusConstantAlpha = GL_ONE_MINUS_CONSTANT_ALPHA
+    };
+
+    inline void enable_blend(BlendFuncType src_factor,BlendFuncType dst_factor) noexcept
+    {
+        glEnable(GL_BLEND);
+        glBlendFunc(static_cast<GLenum>(src_factor),static_cast<GLenum>(dst_factor));
+    }
+
+    inline void enable_blend(BlendFuncType src_rgb,BlendFuncType dst_rgb,BlendFuncType src_alpha,BlendFuncType dst_alpha) noexcept
+    {
+        glEnable(GL_BLEND);
+        glBlendFuncSeparate(static_cast<GLenum>(src_rgb),static_cast<GLenum>(dst_rgb),static_cast<GLenum>(src_alpha),static_cast<GLenum>(dst_alpha));
+    }
+
+    inline void disable_blend() noexcept
+    {
+        glDisable(GL_BLEND);
     }
 }
