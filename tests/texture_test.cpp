@@ -119,7 +119,7 @@ int main() noexcept
         graphics::Program program((graphics::VShader(vertex_shader_glsl)),(graphics::FShader(fragment_shader_glsl)));
         graphics::VertexBuffer<graphics::BufferType::Static,36> vbo(rect_vertices);
         graphics::ElementBuffer<graphics::BufferType::Static,6> ebo(rect_indices);
-        graphics::VertexArray vao(vbo,ebo);
+        graphics::VertexArrayWithEBO vao(vbo,ebo);
         // position attrib
         vao.enable_attrib(0,3,9,0,false);
         // color attrib

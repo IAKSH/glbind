@@ -6,7 +6,14 @@
 namespace graphics
 {
     template <typename T>
-    concept VertexArrayService = requires(T t)
+    concept VertexArrayService= requires(T t)
+    {
+        {t.get_vao_id()} -> std::same_as<unsigned int>;
+        {t.get_binding_vbo_id()} -> std::same_as<unsigned int>;
+    };
+
+    template <typename T>
+    concept VertexArrayServiceWithEBO= requires(T t)
     {
         {t.get_vao_id()} -> std::same_as<unsigned int>;
         {t.get_binding_vbo_id()} -> std::same_as<unsigned int>;
@@ -37,6 +44,25 @@ namespace graphics
      * @param vertex_count 
      */
     template <Primitives primitive,VertexArrayService VAO>
+    inline void draw(const VAO& vao,std::size_t first,std::size_t vertex_count) noexcept
+    {
+        Scope([&]()
+        {
+            glBindVertexArray(vao.get_vao_id());
+            glBindBuffer(GL_ARRAY_BUFFER,vao.get_binding_vbo_id());
+            glDrawArrays(static_cast<int>(primitive),first,vertex_count);
+        });
+    }
+
+    /**
+     * @brief draw the specified primitive from some points in the vertex array
+     * 
+     * @tparam primitive 
+     * @tparam VAO 
+     * @param vao 
+     * @param vertex_count 
+     */
+    template <Primitives primitive,VertexArrayServiceWithEBO VAO>
     inline void draw(const VAO& vao,std::size_t vertex_count) noexcept
     {
         Scope([&]()

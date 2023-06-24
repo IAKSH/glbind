@@ -198,47 +198,27 @@ namespace graphics
         {t.get_ebo_id()} -> std::same_as<unsigned int>;
     };
 
-    template <VertexBufferService VBO,ElementBufferService EBO>
+    template <VertexBufferService VBO>
     class VertexArray
     {
     private:
-        unsigned int vao_id;
         const VBO& vbo;
-        const EBO& ebo;
+        unsigned int vao_id;
 
     public:
-        /**
-         * @brief Construct a new Vertex Array object (with ebo)
-         * 
-         * @param vbo 
-         * @param ebo 
-         */
-        VertexArray(const VBO& vbo,const EBO& ebo) noexcept
-            : vbo(vbo),ebo(ebo)
+        VertexArray(const VBO& vbo) noexcept
+            : vbo(vbo)
         {
             glGenVertexArrays(1,&vao_id);
         }
 
-        /**
-         * @brief VertexArray can't be copied
-         * 
-         */
-        VertexArray(VertexArray&) = delete;
+        VertexArray(VertexArray&) noexcept = delete;
 
-        /**
-         * @brief Destroy the Vertex Array object
-         * 
-         */
         ~VertexArray() noexcept
         {
             glDeleteVertexArrays(1,&vao_id);
         }
 
-        /**
-         * @brief Get the vao id object
-         * 
-         * @return unsigned int 
-         */
         unsigned int get_vao_id() const noexcept
         {
             return vao_id;
@@ -247,11 +227,6 @@ namespace graphics
         unsigned int get_binding_vbo_id() const noexcept
         {
             return vbo.get_vbo_id();
-        }
-
-        unsigned int get_binding_ebo_id() const noexcept
-        {
-            return ebo.get_ebo_id();
         }
 
         /**
@@ -268,12 +243,42 @@ namespace graphics
             Scope([&]()
             {
                 glBindBuffer(GL_ARRAY_BUFFER,vbo.get_vbo_id());
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,ebo.get_ebo_id());
+                //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,ebo.get_ebo_id());
                 glBindVertexArray(vao_id);
                 
                 glVertexAttribPointer(index,len,GL_FLOAT,normalized,vertex_len * sizeof(float),(void*)(offset * sizeof(float)));
                 glEnableVertexAttribArray(index);
             });
+        }
+    };
+
+    template <VertexBufferService VBO,ElementBufferService EBO>
+    class VertexArrayWithEBO : public VertexArray<VBO>
+    {
+    private:
+        const EBO& ebo;
+
+    public:
+        /**
+         * @brief Construct a new Vertex Array object (with ebo)
+         * 
+         * @param vbo 
+         * @param ebo 
+         */
+        VertexArrayWithEBO(const VBO& vbo,const EBO& ebo) noexcept
+            : VertexArray<VBO>(vbo),ebo(ebo)
+        {
+        }
+
+        /**
+         * @brief Destroy the Vertex Array object
+         * 
+         */
+        ~VertexArrayWithEBO() noexcept = default;
+
+        unsigned int get_binding_ebo_id() const noexcept
+        {
+            return ebo.get_ebo_id();
         }
     };
 }

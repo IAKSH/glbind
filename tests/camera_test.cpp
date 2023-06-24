@@ -190,7 +190,7 @@ int main() noexcept
 
         graphics::VertexBuffer<graphics::BufferType::Static,36> vbo(rect_vertices_colorful);
         graphics::ElementBuffer<graphics::BufferType::Static,6> ebo(rect_indices);
-        graphics::VertexArray vao(vbo,ebo);
+        graphics::VertexArrayWithEBO vao(vbo,ebo);
         // position attrib
         vao.enable_attrib(0,3,9,0,false);
         // color attrib
@@ -200,7 +200,7 @@ int main() noexcept
 
         graphics::VertexBuffer<graphics::BufferType::Static,72> cube_vbo(cube_vertices);
         graphics::ElementBuffer<graphics::BufferType::Static,36> cube_ebo(cube_indices);
-        graphics::VertexArray cube_vao(cube_vbo,cube_ebo);
+        graphics::VertexArrayWithEBO cube_vao(cube_vbo,cube_ebo);
         // position attrib
         cube_vao.enable_attrib(0,3,9,0,false);
         // color attrib
