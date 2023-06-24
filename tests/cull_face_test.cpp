@@ -299,7 +299,7 @@ int main() noexcept
         std::mt19937 gen(rd());
         std::uniform_real_distribution<> dis(0.0,0.01);
         
-        while(true)
+        for(int i = 0;i < 240;i++)
         {   
             // move camera
             cam1.rotate(0.0f,sin(glfwGetTime()) / 100.0f,0.0f);
@@ -335,7 +335,7 @@ int main() noexcept
                     graphics::Scope([&]()
                     {
                         post_kernel_program.use();
-                        post_kernel_program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(2.0f,2.0f,2.0f)) * glm::rotate(glm::mat4(1.0f),static_cast<float>(cos(glfwGetTime()) * 2),glm::vec3(0.5f,1.0f,0.5f)));
+                        post_kernel_program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(2.0f,2.0f,2.0f)) * glm::rotate(glm::mat4(1.0f),static_cast<float>(cos(glfwGetTime()) * 2),glm::vec3(1.0f,1.0f,0.0f)));
                         post_kernel_program.set_uniform("cameraTrans",cam2.get_matrix());
                         frame_tex1.bind();
                         graphics::draw<graphics::Primitives::Triangles>(cube_vao,0,324);
