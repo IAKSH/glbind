@@ -19,7 +19,8 @@ namespace graphics
             int renderbuffer_id;
             int program_id;
             int cullface_mode;
-            int polygon_mode;
+            int polygon_mode_front;
+            int polugon_mode_back;
             int depth_func;
             int stencil_func;
             int stencil_ref;
@@ -51,6 +52,11 @@ namespace graphics
     public:
         StatusManager() noexcept
         {
+            int polygon_mode[2];
+            glGetIntegerv(GL_POLYGON_MODE, polygon_mode);
+            status_record.polygon_mode_front = polygon_mode[0];
+            status_record.polugon_mode_back = polygon_mode[1];
+
             glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &status_record.vao_id);
             glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &status_record.vbo_id);
             glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &status_record.ebo_id);
@@ -85,7 +91,6 @@ namespace graphics
             glGetIntegerv(GL_STENCIL_BACK_PASS_DEPTH_PASS, &status_record.stencil_back_pass_op);
             glGetIntegerv(GL_STENCIL_CLEAR_VALUE, &status_record.stencil_clear_value);
             glGetFloatv(GL_BLEND_COLOR, status_record.blend_color.data());
-            glGetIntegerv(GL_POLYGON_MODE,&status_record.polygon_mode);
         }
 
         ~StatusManager() noexcept
@@ -104,7 +109,8 @@ namespace graphics
             glStencilOpSeparate(GL_FRONT, status_record.stencil_fail_op, status_record.stencil_depth_fail_op, status_record.stencil_pass_op);
             glStencilOpSeparate(GL_BACK, status_record.stencil_fail_op, status_record.stencil_depth_fail_op, status_record.stencil_pass_op);
             glCullFace(status_record.cullface_mode);
-            glPolygonMode(GL_FRONT_AND_BACK, status_record.polygon_mode);
+            glPolygonMode(GL_FRONT, status_record.polygon_mode_front);
+            glPolygonMode(GL_BACK, status_record.polugon_mode_back);
             status_record.depth_test ? glEnable(GL_DEPTH_TEST) : glDisable(GL_DEPTH_TEST);
             status_record.stencil_test ? glEnable(GL_STENCIL_TEST) : glDisable(GL_STENCIL_TEST);
             status_record.blend_test ? glEnable(GL_BLEND) : glDisable(GL_BLEND);
@@ -175,36 +181,27 @@ namespace graphics
         glViewport(x,y,w,h);
     }
 
-    enum class PolygonModes
+    enum class PloygonModes
     {
         Point = GL_POINT,
         Line = GL_LINE,
         Fill = GL_FILL
     };
 
-    [[deprecated("can't work yet")]] inline void set_front_polygon_model(PolygonModes mode) noexcept
+    inline void set_front_ploygon_model(PloygonModes mode) noexcept
     {
         glPolygonMode(GL_FRONT,static_cast<GLint>(mode));
     }
 
-    [[deprecated("can't work yet")]] inline void set_back_polygon_model(PolygonModes mode) noexcept
+    inline void set_back_ploygon_model(PloygonModes mode) noexcept
     {
         glPolygonMode(GL_BACK,static_cast<GLint>(mode));
     }
 
-    inline void set_polygon_model(PolygonModes mode) noexcept
+    inline void set_ploygon_model(PloygonModes mode) noexcept
     {
-        glPolygonMode(GL_FRONT_AND_BACK,static_cast<GLint>(mode));
-    }
-
-    inline void set_line_width(float width) noexcept
-    {
-        glLineWidth(width);
-    }
-
-    inline void set_point_size(float size) noexcept
-    {
-        glPointSize(size);
+        set_front_ploygon_model(mode);
+        set_back_ploygon_model(mode);
     }
 
     enum class TestFuncType
@@ -319,38 +316,5 @@ namespace graphics
     inline void disable_blend() noexcept
     {
         glDisable(GL_BLEND);
-    }
-
-    enum class CullFaceType
-    {
-        Back = GL_BACK,
-        Front = GL_FRONT,
-        FrontAndBack = GL_FRONT_AND_BACK
-    };
-
-    inline void set_cull_face_type(CullFaceType cull_face_type) noexcept
-    {
-        glCullFace(static_cast<GLenum>(cull_face_type));
-    }
-
-    enum class CullFrontFaceType
-    {
-        CCW = GL_CCW,
-        CW = GL_CW
-    };
-
-    inline void set_front_face_type(CullFrontFaceType front_face_type) noexcept
-    {
-        glFrontFace(static_cast<GLenum>(front_face_type));
-    }
-
-    inline void enable_cull_face() noexcept
-    {
-        glEnable(GL_CULL_FACE);
-    }
-
-    inline void disable_cull_face() noexcept
-    {
-        glDisable(GL_CULL_FACE);
     }
 }

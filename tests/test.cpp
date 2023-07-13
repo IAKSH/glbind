@@ -163,50 +163,27 @@ static constexpr std::array<unsigned int,6> rect_indices
     1,2,3
 };
 
-static constexpr std::array<float,324> cube_vertices
+static constexpr std::array<float,72> cube_vertices
 {
-    // back face
-    -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, // bottom-left
-     0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, // bottom-right    
-     0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, // top-right              
-     0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, // top-right
-    -0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, // top-left
-    -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, // bottom-left                
-    // front face
-    -0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, // bottom-left
-     0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, // top-right
-     0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, // bottom-right        
-     0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, // top-right
-    -0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, // bottom-left
-    -0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, // top-left        
-    // left face
-    -0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, // top-right
-    -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, // bottom-left
-    -0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, // top-left       
-    -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, // bottom-left
-    -0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, // top-right
-    -0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, // bottom-right
-    // right face
-     0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, // top-left
-     0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, // top-right      
-     0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, // bottom-right          
-     0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, // bottom-right
-     0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, // bottom-left
-     0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, // top-left
-    // bottom face          
-    -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, // top-right
-     0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, // bottom-left
-     0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, // top-left        
-     0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, // bottom-left
-    -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, // top-right
-    -0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, // bottom-right
-    // top face
-    -0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, // top-left
-     0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, // top-right
-     0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, // bottom-right                 
-     0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, // bottom-right
-    -0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, // bottom-left  
-    -0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f  // top-left              
+    1.0f,  1.0f,  0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,  // top right
+    1.0f,  -1.0f, 0.0f,1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,  // bottom right
+    -1.0f, -1.0f, 0.0f,1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,  // bottom left
+    -1.0f, 1.0f,  0.0f,1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,   // top left
+
+    1.0f,  1.0f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,  // top right
+    1.0f,  -1.0f, 1.0f,1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,  // bottom right
+    -1.0f, -1.0f, 1.0f,1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,  // bottom left
+    -1.0f, 1.0f,  1.0f,1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f   // top left
+};
+
+static constexpr std::array<unsigned int,36> cube_indices
+{
+    0,1,3,1,2,3,
+    0,3,7,0,4,7,
+    0,1,5,0,5,4,
+    1,2,6,1,5,6,
+    2,3,6,3,7,6,
+    4,5,6,4,7,6
 };
 
 std::unique_ptr<graphics::extension::Image> load_image(std::string_view path) noexcept(false)
@@ -231,7 +208,7 @@ int main() noexcept
 
         graphics::VertexBuffer<graphics::BufferType::Static,36> vbo(rect_vertices);
         graphics::ElementBuffer<graphics::BufferType::Static,6> ebo(rect_indices);
-        graphics::VertexArrayWithEBO vao(vbo,ebo);
+        graphics::VertexArray vao(vbo,ebo);
         // position attrib
         vao.enable_attrib(0,3,9,0,false);
         // color attrib
@@ -239,8 +216,9 @@ int main() noexcept
         // texture coord attrib
         vao.enable_attrib(2,2,9,7,false);
 
-        graphics::VertexBuffer<graphics::BufferType::Static,324> cube_vbo(cube_vertices);
-        graphics::VertexArray cube_vao(cube_vbo);
+        graphics::VertexBuffer<graphics::BufferType::Static,72> cube_vbo(cube_vertices);
+        graphics::ElementBuffer<graphics::BufferType::Static,36> cube_ebo(cube_indices);
+        graphics::VertexArray cube_vao(cube_vbo,cube_ebo);
         // position attrib
         cube_vao.enable_attrib(0,3,9,0,false);
         // color attrib
@@ -253,8 +231,7 @@ int main() noexcept
         graphics::extension::Camera cam2;
         cam1.set_position({0.5f,0.0f,2.5f});
         //cam2.set_position({0.0f,0.0f,3.5f});
-        cam2.set_position({0.0f,0.0f,2.5f});
-        cam2.set_fov(60.0f);
+        cam2.set_position({0.0f,0.0f,0.5f});
 
         program.use();
         program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(0.5f,0.5f,1.0f)));
@@ -291,10 +268,7 @@ int main() noexcept
         graphics::set_viewport(0,0,800,600);
         graphics::enable_depth_test();
         graphics::enable_blend(graphics::BlendFuncType::SourceAlpha,graphics::BlendFuncType::OneMinusSourceAlpha);
-        graphics::enable_cull_face();
-        graphics::set_front_face_type(graphics::CullFrontFaceType::CW);
-        graphics::set_cull_face_type(graphics::CullFaceType::Back);
-
+        
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_real_distribution<> dis(0.0,0.01);
@@ -308,15 +282,14 @@ int main() noexcept
             cam1.set_position(pos);
 
             //cam2.rotate(cos(glfwGetTime()) / 50.0f,cos(glfwGetTime()) / 50.0f,cos(glfwGetTime()) / 10.0f);
-            //cam2.rotate(0.1f,0.0f,0.0f);
+            cam2.rotate(0.1f,0.0f,0.0f);
+            cam2.set_fov(75.0f);
 
             graphics::Scope([&]()
             {
                 // draw obj to frame1
                 graphics::Scope([&]()
                 {
-                    graphics::set_polygon_model(graphics::PolygonModes::Line);
-                    graphics::set_line_width(100.0f);
                     program.use();
                     program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(0.7f,0.5f,1.0f)) * glm::rotate(glm::mat4(1.0f),static_cast<float>(cos(glfwGetTime())),glm::vec3(0.0f,1.0f,0.0f)));
                     program.set_uniform("cameraTrans",cam1.get_matrix());
@@ -326,7 +299,7 @@ int main() noexcept
                     frame1.clear_depth_buffer();
                     //frame1.clear_stencil_buffer();
                     textures[tex_index]->bind();
-                    graphics::draw<graphics::Primitives::Triangles>(cube_vao,0,324);
+                    graphics::draw<graphics::Primitives::Triangles>(cube_vao,36);
                 });
 
                 // apply effect & draw to screen
@@ -335,10 +308,10 @@ int main() noexcept
                     graphics::Scope([&]()
                     {
                         post_kernel_program.use();
-                        post_kernel_program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(2.0f,2.0f,2.0f)) * glm::rotate(glm::mat4(1.0f),static_cast<float>(cos(glfwGetTime()) * 2),glm::vec3(0.5f,1.0f,0.5f)));
+                        post_kernel_program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(2.0f,2.0f,4.0f)));
                         post_kernel_program.set_uniform("cameraTrans",cam2.get_matrix());
                         frame_tex1.bind();
-                        graphics::draw<graphics::Primitives::Triangles>(cube_vao,0,324);
+                        graphics::draw<graphics::Primitives::Triangles>(cube_vao,36);
                     });
 
                     // draw grass
