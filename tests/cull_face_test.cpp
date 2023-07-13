@@ -271,17 +271,17 @@ int main() noexcept
         for(std::size_t i = 0;i < 3;i++)
             images[i] = load_image(img_pathes[i]);
 
-        std::array<std::unique_ptr<graphics::TextureRGBA>,3> textures;
+        std::array<std::unique_ptr<graphics::TextureRGBA<graphics::TextureType::Texture2D>>,3> textures;
         for(std::size_t i = 0;i < 3;i++)
         {
             auto& img {images[i]};
-            textures[i] = std::make_unique<graphics::TextureRGBA>(img->get_data(),img->get_channels(),0,0,img->get_width(),img->get_height());
+            textures[i] = std::make_unique<graphics::TextureRGBA<graphics::TextureType::Texture2D>>(img->get_data(),img->get_channels(),0,0,img->get_width(),img->get_height());
         }
 
         std::unique_ptr<graphics::extension::Image> grass_image{load_image("E:\\Programming-Projects\\glbind\\tests\\img\\huaji.png")};
-        graphics::TextureRGBA grass_texture(grass_image->get_data(),grass_image->get_channels(),0,0,grass_image->get_width(),grass_image->get_height());
+        graphics::TextureRGBA<graphics::TextureType::Texture2D> grass_texture(grass_image->get_data(),grass_image->get_channels(),0,0,grass_image->get_width(),grass_image->get_height());
 
-        graphics::TextureRGB frame_tex1(nullptr,3,0,0,800,600);
+        graphics::TextureRGB<graphics::TextureType::Texture2D> frame_tex1(nullptr,3,0,0,800,600);
         graphics::Frame frame1(frame_tex1);
 
         test::TimeRecorder recorder;
