@@ -129,8 +129,8 @@ int main() noexcept
         program.set_uniform("transform",glm::scale(glm::mat4(1.0f),glm::vec3(0.5f,0.5f,0.5f)));
 
         auto img {load_image("E:\\Programming-Projects\\glbind\\tests\\img\\wires.jpg")};
-        graphics::TextureRGB tex(img.data.get(),img.channels,0,0,img.width,img.height);
-        graphics::TextureRGB frame_tex(nullptr,3,0,0,128,64);
+        graphics::TextureRGB<graphics::TextureType::Texture2D> tex(img.data.get(),img.channels,0,0,img.width,img.height);
+        graphics::TextureRGB<graphics::TextureType::Texture2D> frame_tex(nullptr,3,0,0,128,64);
         graphics::Frame frame(frame_tex);
         
         for(int i = 0;i < 2;i++)

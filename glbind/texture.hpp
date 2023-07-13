@@ -14,7 +14,15 @@ namespace graphics
         R,G,B,A,RGB,RGBA
     };
 
-    template <ImageChannel texture_channel>
+    enum class TextureType
+    {
+        //Texture1D = GL_TEXTURE_1D,
+        Texture2D = GL_TEXTURE_2D,
+        //Texture3D = GL_TEXTURE_3D,
+        CubeMap = GL_TEXTURE_CUBE_MAP
+    };
+
+    template <TextureType type,ImageChannel texture_channel>
     class Texture
     {
     private:
@@ -192,9 +200,27 @@ namespace graphics
                 else if(channels == 4)
                     img_channel_enum = GL_RGBA;
 
-                glBindTexture(GL_TEXTURE_2D,texture_id);
-                glTexImage2D(GL_TEXTURE_2D,0,texture_channel_enum,w,h,0,img_channel_enum,GL_UNSIGNED_BYTE, trans_image<texture_channel>(data,channels).get() + (y * width + x) * texture_source_channels);
-                glGenerateMipmap(GL_TEXTURE_2D);
+                glBindTexture(static_cast<GLenum>(type),texture_id);
+
+                if constexpr(type == TextureType::Texture2D)
+                {
+                    glTexImage2D(GL_TEXTURE_2D,0,texture_channel_enum,w,h,0,img_channel_enum,GL_UNSIGNED_BYTE,trans_image<texture_channel>(data,channels).get() + (y * width + x) * texture_source_channels);
+                    glGenerateMipmap(GL_TEXTURE_2D);
+                }
+                else if constexpr(type == TextureType::CubeMap)
+                {
+                    // TODO: temp code
+                    // 必须指定方向，这一点有点烦
+                    // 最好是只有一种纹理（数据），在用的时候决定如何使用，而不是一来就定好
+                    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X,0,texture_channel_enum,w,h,0,img_channel_enum,
+                        GL_UNSIGNED_BYTE,trans_image<texture_channel>(data,channels).get() + (y * width + x) * texture_source_channels);
+
+                    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+                }
             });
         }
 
@@ -219,7 +245,14 @@ namespace graphics
          */
         void bind() const noexcept
         {
-            glBindTexture(GL_TEXTURE_2D,texture_id);
+            if constexpr(type == TextureType::Texture2D)
+            {
+                glBindTexture(GL_TEXTURE_2D,texture_id);
+            }
+            else if constexpr(type == TextureType::CubeMap)
+            {
+                // ...
+            }
         }
 
         /**
@@ -261,12 +294,23 @@ namespace graphics
         {
             return texture_channel;
         }
+
+        constexpr TextureType get_texture_type() const noexcept
+        {
+            return type;
+        }
     };
 
-    using TextureR = Texture<ImageChannel::R>;
-    using TextureG = Texture<ImageChannel::G>;
-    using TextureB = Texture<ImageChannel::B>;
-    using TextureA = Texture<ImageChannel::A>;
-    using TextureRGB = Texture<ImageChannel::RGB>;
-    using TextureRGBA = Texture<ImageChannel::RGBA>;
+    template <TextureType type>
+    using TextureR = Texture<type,ImageChannel::R>;
+    template <TextureType type>
+    using TextureG = Texture<type,ImageChannel::G>;
+    template <TextureType type>
+    using TextureB = Texture<type,ImageChannel::B>;
+    template <TextureType type>
+    using TextureA = Texture<type,ImageChannel::A>;
+    template <TextureType type>
+    using TextureRGB = Texture<type,ImageChannel::RGB>;
+    template <TextureType type>
+    using TextureRGBA = Texture<type,ImageChannel::RGBA>;
 }
